@@ -1,5 +1,6 @@
 import csv
 import gzip
+import json
 import pickle
 
 import neat
@@ -128,6 +129,9 @@ def test_move_metrics_sign_rule():
     assert Y.move_metrics(Fixed(3), [st], lost, "x")["move_acc_x"] == 1.0
     with pytest.raises(ValueError):
         Y.move_metrics(Fixed(0), [st], sc, "x")
+    for bad in (-1, 7):
+        with pytest.raises(ValueError, match="outside 0..6"):
+            Y.move_metrics(Fixed(bad), [st], sc, "x")
 
 
 # --- UCI ------------------------------------------------------------------------------
@@ -135,7 +139,7 @@ def test_move_metrics_sign_rule():
 @needs_solver
 @needs_uci
 def test_uci_auc_oracle_and_const(built):
-    rows, X, sc = Y.load_uci_solved(built)
+    rows, X, sc = Y.load_uci_solved(built, allow_partial=True)
     assert len(rows) == 30 and (np.diff(rows) > 0).all()
     table = {x.tobytes(): float(s > 0) for x, s in zip(X, sc)}
 
@@ -147,9 +151,53 @@ def test_uci_auc_oracle_and_const(built):
     c = Y.uci_metrics(ConstValue(0.5), X, sc)
     assert c["uci_auc"] == 0.5
     assert c["uci_wdl_acc"] == float((sc == 0).mean())   # 0.5 predicts draw everywhere
-    import json
     check = json.loads((built / "yardstick" / "uci_check.json").read_text())
     assert check["limit"] == 30 and check["class_mismatch"] == 0
+
+
+@needs_uci
+def test_build_uci_mismatch_writes_check_not_csv(tmp_path, monkeypatch):
+    monkeypatch.setattr(S, "solve_cached", lambda seqs, *a, **kw: np.ones(len(seqs), np.int64))
+    with pytest.raises(RuntimeError, match="not written"):
+        Y.build_uci(tmp_path, limit=30, log=lambda *a: None)
+    yd = tmp_path / "yardstick"
+    check = json.loads((yd / "uci_check.json").read_text())
+    assert check["n"] == 30 and check["class_mismatch"] > 0
+    assert not (yd / "uci_solved.csv").exists()
+
+
+def _fake_uci(rd, check, n_rows):
+    yd = rd / "yardstick"
+    yd.mkdir(parents=True)
+    (yd / "uci_check.json").write_text(json.dumps(check))
+    (yd / "uci_solved.csv").write_text("row,score\n" + "".join(f"{i},1\n" for i in range(n_rows)))
+
+
+@needs_uci
+@pytest.mark.parametrize("check,n_rows,allow,match", [
+    ({"n": 3, "limit": 3, "binary_mismatch": 1, "class_mismatch": 1}, 3, True, "label check"),
+    ({"n": 3, "limit": 3, "binary_mismatch": 0, "class_mismatch": 2}, 3, True, "label check"),
+    ({"n": 3, "limit": 3, "binary_mismatch": 0, "class_mismatch": 0}, 3, False, "full 67557"),
+    ({"n": Y.N_UCI, "limit": None, "binary_mismatch": 0, "class_mismatch": 0}, 3, False,
+     "3 rows"),
+    ({"n": 3, "limit": 3, "binary_mismatch": 0, "class_mismatch": 0}, 4, True, "4 rows"),
+])
+def test_load_uci_solved_checks(tmp_path, check, n_rows, allow, match):
+    _fake_uci(tmp_path, check, n_rows)
+    with pytest.raises(RuntimeError, match=match):
+        Y.load_uci_solved(tmp_path, allow_partial=allow)
+
+
+@needs_uci
+def test_load_uci_solved_partial_ok(tmp_path):
+    _fake_uci(tmp_path, {"n": 3, "limit": 3, "binary_mismatch": 0, "class_mismatch": 0}, 3)
+    rows, X, sc = Y.load_uci_solved(tmp_path, allow_partial=True)
+    assert rows.tolist() == [0, 1, 2] and X.shape == (3, 42) and sc.tolist() == [1, 1, 1]
+
+
+def test_load_uci_solved_missing_check(tmp_path):
+    with pytest.raises(FileNotFoundError, match="uci_check.json"):
+        Y.load_uci_solved(tmp_path)
 
 
 def test_uci_metrics_thresholds():
@@ -194,7 +242,7 @@ def test_ladder_deterministic():
 @needs_uci
 def test_score_value_fn_and_champions(built, tmp_path):
     d = Y.score_value_fn(ConstValue(0.5), sims=20, parts=("uci", "moves", "ladder"),
-                         results_dir=built, ladder_opps=("random",))
+                         results_dir=built, ladder_opps=("random",), allow_partial=True)
     assert list(d) == sorted(d)
     for k in ("uci_auc", "move_acc_net", "move_acc_mcts", "ladder_random_net",
               "ladder_random_mcts_w"):
@@ -209,6 +257,10 @@ def test_score_value_fn_and_champions(built, tmp_path):
     (runs / "t").mkdir(parents=True)
     with gzip.open(runs / "t" / "champions.pkl.gz", "wb") as f:
         pickle.dump(champs, f)
+    with pytest.raises(FileNotFoundError, match="config.ini"):
+        Y.score_champions("t", built, runs, sims=4, allow_partial=True, log=lambda *a: None)
+    (built / "t").mkdir(exist_ok=True)
+    (built / "t" / "config.ini").write_text(netfn.DEFAULT_CONFIG.read_text())
     with pytest.raises(RuntimeError, match="limit"):
         Y.score_champions("t", built, runs, sims=4, log=lambda *a: None)
     path = Y.score_champions("t", built, runs, sims=4, allow_partial=True,
@@ -220,6 +272,97 @@ def test_score_value_fn_and_champions(built, tmp_path):
     first = path.read_bytes()
     Y.score_champions("t", built, runs, sims=4, allow_partial=True, log=lambda *a: None)
     assert path.read_bytes() == first
+    explicit = Y.score_champions("t", built, runs, sims=4, allow_partial=True,
+                                 config_path=netfn.DEFAULT_CONFIG, log=lambda *a: None)
+    assert explicit.read_bytes() == first
+
+
+def _champ_runs(tmp_path, n):
+    cfg = netfn.load_config()
+    champs = {}
+    for r in range(n):
+        g = neat.DefaultGenome(r + 1)
+        g.configure_new(cfg.genome_config)
+        champs[r] = {"genome": g, "generation": r, "key": r + 1}
+    runs = tmp_path / "runs"
+    (runs / "t").mkdir(parents=True)
+    with gzip.open(runs / "t" / "champions.pkl.gz", "wb") as f:
+        pickle.dump(champs, f)
+    return runs
+
+
+@needs_solver
+@needs_uci
+def test_champions_incremental_csv(built, tmp_path, monkeypatch):
+    runs = _champ_runs(tmp_path, 3)
+    rd = tmp_path / "rd"
+    (rd / "yardstick").mkdir(parents=True)
+    for f in ("uci_check.json", "uci_solved.csv", "positions.csv"):
+        (rd / "yardstick" / f).write_bytes((built / "yardstick" / f).read_bytes())
+
+    def fake(genome, config, parts=(), **kw):
+        if genome.key == 3:
+            raise RuntimeError("late failure")
+        return {"z": 1.0, "a": float(genome.key)}
+
+    monkeypatch.setattr(Y, "score_genome", fake)
+    with pytest.raises(RuntimeError, match="late failure"):
+        Y.score_champions("t", rd, runs, allow_partial=True,
+                          config_path=netfn.DEFAULT_CONFIG, log=lambda *a: None)
+    rows = list(csv.reader((rd / "t" / "champions_yardstick.csv").read_text().splitlines()))
+    assert rows == [["round", "generation", "key", "a", "z"],
+                    ["0", "0", "1", "1.0", "1.0"], ["1", "1", "2", "2.0", "1.0"]]
+
+
+@needs_solver
+@needs_uci
+def test_champions_fail_fast_on_missing_data(built, tmp_path, monkeypatch):
+    runs = _champ_runs(tmp_path, 2)
+    calls = []
+    monkeypatch.setattr(Y, "score_genome", lambda *a, **kw: calls.append(1) or {})
+    rd = tmp_path / "rd"
+    (rd / "yardstick").mkdir(parents=True)
+    for f in ("uci_check.json", "uci_solved.csv"):
+        (rd / "yardstick" / f).write_bytes((built / "yardstick" / f).read_bytes())
+    with pytest.raises(FileNotFoundError, match="positions.csv"):
+        Y.score_champions("t", rd, runs, allow_partial=True,
+                          config_path=netfn.DEFAULT_CONFIG, log=lambda *a: None)
+    (rd / "yardstick" / "positions.csv").write_bytes(
+        (built / "yardstick" / "positions.csv").read_bytes())
+    with pytest.raises(FileNotFoundError, match="solver_openings.csv"):
+        Y.score_champions("t", rd, runs, allow_partial=True, final_solver=True,
+                          config_path=netfn.DEFAULT_CONFIG, log=lambda *a: None)
+    assert calls == []
+    assert not (rd / "t" / "champions_yardstick.csv").exists()
+
+
+def test_solver_rung_per_class(monkeypatch):
+    # openings: first player won (score 3), drawn (0), lost (-2); each played both colours
+    openings = [([0, 1, 0, 1, 2, 3, 2, 3], 3), ([0, 1, 0, 1, 2, 3, 2, 3], 0),
+                ([0, 1, 0, 1, 2, 3, 2, 3], -2)]
+    # net results (net's side), in game order: first, second for each opening
+    results = [0.5, 0.0, 0.5, 0.5, 0.0, 1.0]
+
+    def fake_play(games, rng):
+        out = []
+        for k, (_, a, b) in enumerate(games):
+            net_first = k % 2 == 0
+            res = results[k]
+            out.append({"game": k, "result_first": res if net_first else 1.0 - res,
+                        "n_moves": 12})
+        return out
+
+    monkeypatch.setattr(O, "play_games", fake_play)
+    monkeypatch.setattr(O, "SolverPlayer", lambda: None)
+    d = Y.solver_rung(object(), openings)
+    # theory from the net's side: won games = (op0 first, op2 second): results 0.5, 1.0
+    assert d["solver_preserve_won"] == 0.5 and d["solver_preserve_won_n"] == 2
+    # drawn: op1 both colours: 0.5, 0.5
+    assert d["solver_preserve_drawn"] == 1.0 and d["solver_preserve_drawn_n"] == 2
+    # lost: op0 second (0.0), op2 first (0.0)
+    assert d["solver_preserve_lost"] == 1.0 and d["solver_preserve_lost_n"] == 2
+    assert d["solver_first_win_kept"] == 0.5
+    assert "solver_preserve" not in d
 
 
 @needs_solver
@@ -228,5 +371,7 @@ def test_score_value_fn_and_champions(built, tmp_path):
 def test_solver_rung_runs(built):
     d = Y.score_value_fn(ConstValue(0.5), sims=20, parts=("solver",), results_dir=built)
     assert d["solver_n_openings"] == 6
-    assert 0.0 <= d["solver_preserve"] <= 1.0
+    for c in ("won", "drawn", "lost"):
+        assert d[f"solver_preserve_{c}_n"] == 4
+        assert 0.0 <= d[f"solver_preserve_{c}"] <= 1.0
     assert d["solver_first_score"] <= d["solver_first_theory"] + 1e-12  # perfect opponent

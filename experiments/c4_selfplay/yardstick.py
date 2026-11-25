@@ -9,16 +9,22 @@ Builds (deterministic; outputs under ``<results-dir>/yardstick/``, default
     uv run python experiments/c4_selfplay/yardstick.py champions --name s0 [--final-solver]
 
 ``champions`` reads ``<runs-dir>/<name>/champions.pkl.gz`` ({round: {"genome", "generation",
-"key"}}, written by run.py) and writes ``<results-dir>/<name>/champions_yardstick.csv``: one
-row per round, columns round, generation, key, then the scores in sorted order.
+"key"}}, written by run.py) and the run's NEAT config ``<results-dir>/<name>/config.ini``
+(required unless ``--config`` names one), and writes
+``<results-dir>/<name>/champions_yardstick.csv``: one row per round, columns round,
+generation, key, then the scores in sorted order. Every yardstick file it needs is loaded
+(and checked) before any scoring; the csv is rewritten after each round, so a late failure
+keeps the rounds already scored.
 
-``build-uci``  -> ``uci_solved.csv`` (``row,score``) and ``uci_check.json``. Every UCI
-    Connect-4 position (PMLB ``connect_4``, 67,557 8-ply positions, x = first player to
-    move) solved by Pons' solver; the score is from the side to move (= x). Checked row by
-    row against the dataset's 3-class label (win <-> score > 0, draw <-> 0, loss <-> < 0);
-    any mismatch fails the build. ``--limit N`` takes the first N rows of a fixed seeded
-    permutation (testing only; recorded in ``uci_check.json``). Cache:
-    ``uci_solve_cache.csv`` (seq-keyed).
+``build-uci``  -> ``uci_check.json`` (always: the record of the check) and ``uci_solved.csv``
+    (``row,score``; only when the check passes). Every UCI Connect-4 position (PMLB
+    ``connect_4``, 67,557 8-ply positions, x = first player to move) solved by Pons'
+    solver; the score is from the side to move (= x). Checked row by row against the
+    dataset's 3-class label (win <-> score > 0, draw <-> 0, loss <-> < 0); any mismatch
+    fails the build. ``--limit N`` takes the first N rows of a fixed seeded permutation
+    (testing only; recorded in ``uci_check.json``). Cache: ``uci_solve_cache.csv``
+    (seq-keyed). ``load_uci_solved`` refuses the csv unless ``uci_check.json`` records no
+    mismatch and its row count, and (unless ``allow_partial``) all 67,557 rows.
 ``build-positions`` -> ``positions.csv`` (``seq,ply,s0..s6``): positions from games between
     RandomPlayer, AlphaBeta(2), AlphaBeta(4) (all 9 ordered pairings, round-robin over
     games, from the empty board). One position per game, its ply drawn uniformly from
@@ -40,7 +46,8 @@ Scores (``score_value_fn`` / ``score_genome``):
         opt iff s_chosen == s_best (exactly optimal, secondary).
     ladder_<opp>_<m> (+ _w, _d, _l)            ``match_score`` of the net player against
         random, ab2, ab4, ab6 over OPENINGS_2PLY, each opening with both colours.
-    solver rung ("solver" in parts)            see ``solver_rung``.
+    solver rung ("solver" in parts)            see ``solver_rung`` (solver_first_*,
+        solver_preserve_{won,drawn,lost} (+ _n), solver_second_moves).
 """
 from __future__ import annotations
 
@@ -102,6 +109,8 @@ def _write_csv(path, header, rows):
         w = csv.writer(f, lineterminator="\n")
         w.writerow(header)
         w.writerows(rows)
+        f.flush()
+        os.fsync(f.fileno())
     tmp.replace(path)
 
 
@@ -161,23 +170,50 @@ def build_uci(results_dir=DEFAULT_RESULTS, limit=None, workers=12, log=print):
     counts["confusion"] = confusion
     counts["class_mismatch"] = int((cls[rows] != pred).sum())
     counts["label_counts"] = {CLASS_NAMES[a]: int((cls[rows] == a).sum()) for a in range(3)}
-    _write_csv(out / "uci_solved.csv", ["row", "score"],
-               [[int(i), int(s)] for i, s in zip(rows, sc)])
+    out.mkdir(parents=True, exist_ok=True)
     (out / "uci_check.json").write_text(json.dumps(counts, indent=2, sort_keys=True) + "\n")
     if bin_mismatch or counts["class_mismatch"]:
         raise RuntimeError(f"UCI labels disagree with the solver: {bin_mismatch} binary and "
                            f"{counts['class_mismatch']} 3-class mismatches; see "
-                           f"{out / 'uci_check.json'}")
+                           f"{out / 'uci_check.json'} (uci_solved.csv not written)")
+    _write_csv(out / "uci_solved.csv", ["row", "score"],
+               [[int(i), int(s)] for i, s in zip(rows, sc)])
     log(f"build-uci: {len(rows)} rows agree with the labels ({time.time() - t0:.1f} s)")
     return counts
 
 
-def load_uci_solved(results_dir=DEFAULT_RESULTS):
-    """(rows, X [n, 42] side-to-move encoding, scores [n]) for the rows in uci_solved.csv."""
-    _, body = _read_csv(ydir(results_dir) / "uci_solved.csv")
+def check_uci(results_dir=DEFAULT_RESULTS, allow_partial=False):
+    """The ``uci_check.json`` record, after asserting it describes a usable build: no binary
+    or 3-class mismatch, and (unless ``allow_partial``) every row (n == 67557, no limit)."""
+    path = ydir(results_dir) / "uci_check.json"
+    if not path.exists():
+        raise FileNotFoundError(f"{path} missing: run build-uci")
+    check = json.loads(path.read_text())
+    if check.get("binary_mismatch") != 0 or check.get("class_mismatch") != 0:
+        raise RuntimeError(f"{path}: the UCI build failed its label check "
+                           f"(binary_mismatch={check.get('binary_mismatch')}, "
+                           f"class_mismatch={check.get('class_mismatch')})")
+    if not allow_partial and (check.get("n") != N_UCI or check.get("limit") is not None):
+        raise RuntimeError(f"{path}: n={check.get('n')} (limit {check.get('limit')}), not the "
+                           f"full {N_UCI} rows; run the full build-uci (or pass "
+                           f"--allow-partial for testing)")
+    return check
+
+
+def load_uci_solved(results_dir=DEFAULT_RESULTS, allow_partial=False):
+    """(rows, X [n, 42] side-to-move encoding, scores [n]) for the rows in uci_solved.csv,
+    which must match a passing ``uci_check.json`` (see ``check_uci``)."""
+    check = check_uci(results_dir, allow_partial)
+    path = ydir(results_dir) / "uci_solved.csv"
+    _, body = _read_csv(path)
+    if len(body) != check["n"]:
+        raise RuntimeError(f"{path}: {len(body)} rows but uci_check.json records "
+                           f"n={check['n']}")
     rows = np.array([int(r[0]) for r in body], dtype=np.int64)
     sc = np.array([int(r[1]) for r in body], dtype=np.int64)
     X, _, _ = load_uci()
+    # X is used unchanged: every UCI row is ply 8, so the first player (x = +1) is the side
+    # to move, which is both the value net's encoding and the solver score's view.
     return rows, X[rows], sc
 
 
@@ -316,6 +352,11 @@ def move_metrics(player, states, scores, suffix):
     """Move accuracy of ``player`` (any player: choose_many) on solved positions."""
     cols = np.asarray(player.choose_many(states, [np.random.default_rng([0, i])
                                                   for i in range(len(states))]))
+    if cols.shape != (len(states),):
+        raise ValueError(f"{player.name} returned {cols.shape} moves for {len(states)} states")
+    if ((cols < 0) | (cols > 6)).any():
+        raise ValueError(f"{player.name} chose a column outside 0..6: "
+                         f"{sorted(set(cols[(cols < 0) | (cols > 6)].tolist()))}")
     sc = scores[np.arange(len(states)), cols]
     if (sc == -1000).any():
         raise ValueError(f"{player.name} chose a full column")
@@ -345,7 +386,11 @@ def solver_rung(player, openings, seed=0):
       solver_first_theory   mean theoretical result for the first player (the ceiling)
       solver_first_win_kept share of first-player-won openings the net wins (nan if none)
       solver_second_moves   mean number of moves the net makes as second player
-      solver_preserve       share of all games where the net reaches its side's theory
+      solver_preserve_<c>   for c in won / drawn / lost (theory from the net's side, over
+                            both colours): share of those games where the net achieves the
+                            game-theoretic result (nan if none); solver_preserve_<c>_n is
+                            the number of such games. Split by class because a lost game is
+                            "preserved" whatever the net does.
     """
     solver = O.SolverPlayer()
     games, theory, net_first = [], [], []
@@ -369,13 +414,17 @@ def solver_rung(player, openings, seed=0):
     won_first = nf & (th == 1.0)
     second_moves = [sum(1 for k in range(8, r["n_moves"]) if k % 2 == 1)
                     for r in recs if not net_first[r["game"]]]
-    return {"solver_first_score": float(res[nf].mean()),
-            "solver_first_theory": float(th[nf].mean()),
-            "solver_first_win_kept": (float(res[won_first].mean()) if won_first.any()
-                                      else float("nan")),
-            "solver_second_moves": float(np.mean(second_moves)),
-            "solver_preserve": float((res == th).mean()),
-            "solver_n_openings": int(len(openings))}
+    out = {"solver_first_score": float(res[nf].mean()),
+           "solver_first_theory": float(th[nf].mean()),
+           "solver_first_win_kept": (float(res[won_first].mean()) if won_first.any()
+                                     else float("nan")),
+           "solver_second_moves": float(np.mean(second_moves)),
+           "solver_n_openings": int(len(openings))}
+    for name, t in (("won", 1.0), ("drawn", 0.5), ("lost", 0.0)):
+        m = th == t
+        out[f"solver_preserve_{name}"] = float((res[m] == t).mean()) if m.any() else float("nan")
+        out[f"solver_preserve_{name}_n"] = int(m.sum())
+    return out
 
 
 class _Data:
@@ -383,24 +432,27 @@ class _Data:
     _cache = {}
 
     @classmethod
-    def get(cls, results_dir, what):
-        key = (str(Path(results_dir).resolve()), what)
+    def get(cls, results_dir, what, allow_partial=False):
+        key = (str(Path(results_dir).resolve()), what,
+               bool(allow_partial) if what == "uci" else False)
         if key not in cls._cache:
-            cls._cache[key] = {"uci": lambda: load_uci_solved(results_dir),
+            cls._cache[key] = {"uci": lambda: load_uci_solved(results_dir, allow_partial),
                                "moves": lambda: load_positions(results_dir),
                                "solver": lambda: load_solver_openings(results_dir)}[what]()
         return cls._cache[key]
 
 
 def score_value_fn(value_fn, sims=200, parts=("uci", "moves", "ladder"), seed=0,
-                   results_dir=DEFAULT_RESULTS, ladder_opps=LADDER_OPPS, modes=MODES):
-    """All yardstick numbers for one value function (dict, sorted keys)."""
+                   results_dir=DEFAULT_RESULTS, ladder_opps=LADDER_OPPS, modes=MODES,
+                   allow_partial=False):
+    """All yardstick numbers for one value function (dict, sorted keys). ``allow_partial``
+    accepts a ``--limit`` UCI build (testing only)."""
     out = {}
     for p in parts:
         if p not in ("uci", "moves", "ladder", "solver"):
             raise ValueError(f"unknown part {p!r}")
     if "uci" in parts:
-        _, X, sc = _Data.get(results_dir, "uci")
+        _, X, sc = _Data.get(results_dir, "uci", allow_partial)
         out.update(uci_metrics(value_fn, X, sc))
     if "moves" in parts:
         states, _, sc = _Data.get(results_dir, "moves")
@@ -428,21 +480,36 @@ def default_runs_dir():
     return home / "c4_selfplay_runs"
 
 
+def _champion_csv(path, rows):
+    ids = ["round", "generation", "key"]
+    keys = sorted({k for d in rows for k in d} - set(ids))
+    header = ids + keys
+    _write_csv(path, header, [[d.get(k, "") for k in header] for d in rows])
+
+
 def score_champions(name, results_dir=DEFAULT_RESULTS, runs_dir=None, sims=200, seed=0,
-                    final_solver=False, allow_partial=False, log=print):
+                    final_solver=False, allow_partial=False, config_path=None, log=print):
+    """Score every champion of run ``name`` (see the module docstring). ``config_path``
+    overrides ``<results-dir>/<name>/config.ini``, which is otherwise required."""
     import torch
 
     torch.set_num_threads(1)
     runs_dir = Path(runs_dir) if runs_dir else default_runs_dir()
-    check = json.loads((ydir(results_dir) / "uci_check.json").read_text())
-    if check.get("limit") is not None and not allow_partial:
-        raise RuntimeError("uci_solved.csv is a --limit build; run the full build-uci "
-                           "(or pass --allow-partial for testing)")
+    if config_path is None:
+        config_path = Path(results_dir) / name / "config.ini"
+        if not config_path.exists():
+            raise FileNotFoundError(f"{config_path} missing (the run's NEAT config); pass "
+                                    f"--config to name one explicitly")
+    config = netfn.load_config(Path(config_path))
+    # every data file up front: a missing or unchecked file fails before any scoring
+    _Data.get(results_dir, "uci", allow_partial)
+    _Data.get(results_dir, "moves")
+    if final_solver:
+        _Data.get(results_dir, "solver")
     with gzip.open(runs_dir / name / "champions.pkl.gz", "rb") as f:
         champions = pickle.load(f)
-    cfg_path = Path(results_dir) / name / "config.ini"
-    config = netfn.load_config(cfg_path if cfg_path.exists() else netfn.DEFAULT_CONFIG)
     rounds = sorted(champions)
+    path = Path(results_dir) / name / "champions_yardstick.csv"
     rows = []
     for r in rounds:
         t0 = time.time()
@@ -450,17 +517,15 @@ def score_champions(name, results_dir=DEFAULT_RESULTS, runs_dir=None, sims=200, 
                                               else ())
         entry = champions[r]   # run.py: {"genome": DefaultGenome, "generation": int, "key": int}
         d = score_genome(entry["genome"], config, sims=sims, parts=parts, seed=seed,
-                         results_dir=results_dir)
+                         results_dir=results_dir, allow_partial=allow_partial)
         d["round"] = int(r)
         d["generation"] = int(entry["generation"])
         d["key"] = int(entry["key"])
         rows.append(d)
+        _champion_csv(path, rows)   # after every round: a late failure keeps the work
         log(f"champions {name}: round {r} scored in {time.time() - t0:.1f} s")
-    ids = ["round", "generation", "key"]
-    keys = sorted({k for d in rows for k in d} - set(ids))
-    header = ids + keys
-    path = Path(results_dir) / name / "champions_yardstick.csv"
-    _write_csv(path, header, [[d.get(k, "") for k in header] for d in rows])
+    if not rows:
+        _champion_csv(path, rows)
     log(f"wrote {path}")
     return path
 
@@ -489,6 +554,8 @@ def main(argv=None):
     a.add_argument("--seed", type=int, default=0)
     a.add_argument("--final-solver", action="store_true")
     a.add_argument("--allow-partial", action="store_true")
+    a.add_argument("--config", default=None,
+                   help="NEAT config (default: <results-dir>/<name>/config.ini, required)")
     args = ap.parse_args(argv)
     rd = args.results_dir
     if args.cmd == "build-uci":
@@ -499,7 +566,8 @@ def main(argv=None):
         build_solver_openings(rd, n=args.n, seed=args.seed, workers=args.workers)
     elif args.cmd == "champions":
         score_champions(args.name, rd, args.runs_dir, sims=args.sims, seed=args.seed,
-                        final_solver=args.final_solver, allow_partial=args.allow_partial)
+                        final_solver=args.final_solver, allow_partial=args.allow_partial,
+                        config_path=args.config)
 
 
 if __name__ == "__main__":

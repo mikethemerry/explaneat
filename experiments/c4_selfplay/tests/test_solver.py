@@ -144,13 +144,36 @@ def _write(path, text):
     ("seq,score\n12x212,5\n", "line 2"),              # bad key
     ("seq,score\n121212,5\n4455,abc\n", "line 3"),    # non-integer
     ("seq,score\n121212,5\n121212,4\n", "line 3"),    # conflicting duplicate
-    ("seq,score\n121212,5", "newline"),                # truncated
     ("seq,s0\n121212,5\n", "header"),
 ])
 def test_solve_cached_rejects_bad_cache(tmp_path, text, match):
     path = tmp_path / "c.csv"
     _write(path, text)
     with pytest.raises(ValueError, match=match):
+        S.solve_cached(["121212"], path)
+
+
+@pytest.mark.parametrize("text,kept", [
+    ("seq,score\n121212,18\n4455,12", "seq,score\n121212,18\n"),   # cut mid-row
+    ("seq,score\n121212,18\n4455,", "seq,score\n121212,18\n"),
+    ("seq,sc", ""),                                                   # cut in the header
+])
+def test_solve_cached_repairs_truncated_tail(tmp_path, text, kept):
+    path = tmp_path / "c.csv"
+    _write(path, text)
+    with pytest.warns(UserWarning, match=f"dropped the last {len(text) - len(kept)} bytes"):
+        got = S.solve_cached(["121212", "4455"], path)
+    np.testing.assert_array_equal(got, S.solve(["121212", "4455"]))
+    lines = path.read_text().splitlines()
+    assert lines[0] == "seq,score"
+    assert sorted(ln.split(",")[0] for ln in lines[1:]) == ["121212", "4455"]
+    assert path.read_text().endswith("\n")
+
+
+def test_solve_cached_repair_keeps_validation(tmp_path):
+    path = tmp_path / "c.csv"
+    _write(path, "seq,score\n12x212,5\n4455,1")   # bad row before the cut tail
+    with pytest.warns(UserWarning), pytest.raises(ValueError, match="line 2"):
         S.solve_cached(["121212"], path)
 
 

@@ -11,6 +11,7 @@ Board cells use the engine's index c*6+r (row 0 = bottom).
 """
 import os
 import subprocess
+import warnings
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -243,20 +244,43 @@ def _read_cache(path, header):
     return cache
 
 
+def _repair_tail(path):
+    """Crash recovery: if ``path`` does not end in a newline (a write cut short), truncate
+    it to its last newline (to empty if it has none) and warn with the number of bytes
+    dropped. Returns that number (0 if nothing was dropped)."""
+    raw = path.read_bytes()
+    if not raw or raw.endswith(b"\n"):
+        return 0
+    keep = raw.rfind(b"\n") + 1
+    with path.open("r+b") as f:
+        f.truncate(keep)
+        f.flush()
+        os.fsync(f.fileno())
+    dropped = len(raw) - keep
+    warnings.warn(f"{path}: did not end in a newline (interrupted write); dropped the last "
+                  f"{dropped} bytes (an incomplete row, re-solved if needed)", stacklevel=3)
+    return dropped
+
+
 def solve_cached(seqs, path, analyse=False, workers=12, chunk=64,
                  timeout=DEFAULT_TIMEOUT) -> np.ndarray:
     """``solve`` with a csv cache keyed by sequence (``seq,score`` or ``seq,s0,...,s6``).
 
-    Every cache row is validated on read (see ``_read_cache``). Only sequences missing
-    from the cache are solved; each finished chunk is appended (one write, then flush and
-    fsync) in chunk order, so a crash keeps the progress made. Returns results in input
-    order, like ``solve`` (same side-to-move convention).
+    Crash recovery: a cache that does not end in a newline (an append cut short) is first
+    truncated to its last newline, with a warning naming the bytes dropped. Every remaining
+    cache row is then validated on read (see ``_read_cache``: header, field count, keys,
+    canonical integers, conflicting duplicates all raise). Only sequences missing from the
+    cache are solved; each finished chunk is appended (one write, then flush and fsync) in
+    chunk order, so a crash keeps the progress made. Returns results in input order, like
+    ``solve`` (same side-to-move convention).
     """
     path = Path(path)
     seqs = [str(s) for s in seqs]
     for i, s in enumerate(seqs):
         _check_seq(s, f" (input {i})")
     header = _header(analyse)
+    if path.exists():
+        _repair_tail(path)
     cache = _read_cache(path, header) if path.exists() else {}
     missing = list(dict.fromkeys(s for s in seqs if s not in cache))
     if missing:
