@@ -128,13 +128,26 @@ def test_play_match_deterministic_and_seed_dependent():
     assert [r["moves"] for r in r1] != [r["moves"] for r in r3]
 
 
-def test_play_match_n_parallel_same_result():
-    a, b = O.AlphaBeta(2), O.RandomPlayer()
-    r1 = O.play_match(a, b, O.OPENINGS_2PLY[:6], np.random.default_rng(3))
-    r2 = O.play_match(a, b, O.OPENINGS_2PLY[:6], np.random.default_rng(3), n_parallel=3)
-    assert len(r2) == 12
-    # different batching consumes the rng in a different order, so only check bookkeeping
-    assert [(r["opening"], r["a_first"]) for r in r1] == [(r["opening"], r["a_first"]) for r in r2]
+@pytest.mark.parametrize("n_parallel", [1, 5])
+def test_play_match_independent_of_n_parallel(n_parallel):
+    a, b = O.RandomPlayer(), O.AlphaBeta(2)
+    ref = O.play_match(a, b, O.OPENINGS_2PLY[:6], np.random.default_rng(3))
+    got = O.play_match(a, b, O.OPENINGS_2PLY[:6], np.random.default_rng(3),
+                       n_parallel=n_parallel)
+    assert len(ref) == 12
+    assert got == ref  # moves, results and bookkeeping identical
+
+
+def test_choose_requires_generator():
+    s = state_of([3])
+    with pytest.raises(TypeError):
+        O.RandomPlayer().choose(s)
+    with pytest.raises(ValueError):
+        O.RandomPlayer().choose(s, None)
+    with pytest.raises(ValueError):
+        O.AlphaBeta(2).choose(s, None)
+    with pytest.raises(ValueError):
+        O.RandomPlayer().choose_many([s, s], [np.random.default_rng(0)])
 
 
 class ScriptPlayer:
@@ -160,6 +173,41 @@ def test_result_bookkeeping_second_player_win():
         assert r["n_moves"] == 8
         assert r["moves"] == script
         assert r["opening"] == []
+
+
+# Full-board games found by random play that avoids every winning move until ply 41
+# (a scratch search, seed 0); both are re-checked against the engine below.
+FULL_WIN_ON_42 = [4, 1, 4, 4, 6, 4, 6, 6, 0, 0, 3, 3, 3, 5, 2, 1, 4, 3, 6, 0, 4, 5, 1, 0,
+                  1, 3, 6, 6, 0, 1, 2, 5, 0, 3, 5, 5, 1, 2, 5, 2, 2, 2]
+FULL_DRAW = [3, 3, 6, 1, 3, 0, 2, 6, 4, 2, 6, 4, 6, 0, 2, 6, 4, 3, 2, 3, 3, 2, 4, 0, 2, 4,
+             4, 6, 1, 5, 5, 1, 0, 0, 1, 5, 5, 0, 5, 5, 1, 1]
+
+
+def _engine_wins(moves):
+    """Per ply, whether that move wins, from the jitted engine."""
+    pos, mask = np.uint64(0), np.uint64(0)
+    out = []
+    for c in moves:
+        assert E.can_play(mask, c)
+        out.append(bool(E.is_winning_move(pos, mask, c)))
+        pos, mask = E.play(pos, mask, c)
+    assert E.n_moves(mask) == 42
+    return out
+
+
+@pytest.mark.parametrize("script,result_first", [(FULL_WIN_ON_42, 0.0), (FULL_DRAW, 0.5)])
+def test_game_ending_on_move_42(script, result_first):
+    wins = _engine_wins(script)
+    assert not any(wins[:41])
+    assert wins[41] == (result_first == 0.0)  # the 42nd move is the second player's
+    a, b = ScriptPlayer(script, "a"), ScriptPlayer(script, "b")
+    recs = O.play_games([([], a, b), (script[:2], b, a)], np.random.default_rng(0),
+                        n_parallel=2)
+    assert len(recs) == 2
+    for r in recs:
+        assert r["n_moves"] == 42
+        assert r["moves"] == script
+        assert r["result_first"] == result_first
 
 
 def test_terminal_opening_is_skipped():
@@ -196,6 +244,18 @@ def test_netgreedy_argmax_of_one_minus_child_value():
     # empty board: child after col c has our single stone in col c -> value 0.1c
     # 1 - value is largest for c = 0
     assert O.NetGreedy(ByCol()).choose(state_of([]), None) == 0
+
+
+@pytest.mark.parametrize("bad", [np.nan, np.inf, -np.inf])
+def test_netgreedy_rejects_non_finite_values(bad):
+    class Bad:
+        def __call__(self, X):
+            v = np.full(np.atleast_2d(X).shape[0], 0.5)
+            v[-1] = bad
+            return v
+
+    with pytest.raises(ValueError):
+        O.NetGreedy(Bad()).choose(state_of([3]), None)
 
 
 def test_netmcts_takes_immediate_win_and_batches():

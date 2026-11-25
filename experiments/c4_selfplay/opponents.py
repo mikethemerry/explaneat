@@ -1,14 +1,17 @@
 """Fixed opponents and the match runner: the yardstick for playing strength.
 
-Every player has ``name`` and ``choose_many(states, rng) -> int64[n]`` (one column per
-state), plus ``choose(state, rng)``. A state is a ``GameState`` (pos, mask, move history),
-the same object for every player, so the match runner treats all players alike. States
-passed to a player are non-terminal with the player to move.
+Every player has ``name`` and ``choose_many(states, rngs) -> int64[n]`` (one column per
+state; ``rngs`` is a list of ``np.random.Generator`` aligned with ``states``), plus
+``choose(state, rng)`` (one generator, required). A state is a ``GameState`` (pos, mask,
+move history), the same object for every player, so the match runner treats all players
+alike. States passed to a player are non-terminal with the player to move.
 
-Determinism: players draw randomness only from the ``rng`` they are given (RandomPlayer,
-AlphaBeta's tie-break among equal root scores); SolverPlayer, NetGreedy and NetMCTS are
-deterministic. ``play_match`` with a seeded ``np.random.default_rng`` and fixed
-``n_parallel`` gives identical records.
+Determinism: players draw randomness for a state only from that state's generator
+(RandomPlayer, AlphaBeta's tie-break among equal root scores); SolverPlayer, NetGreedy and
+NetMCTS are deterministic and ignore the generators. ``play_games`` draws one seed from the
+caller's ``rng`` and spawns one generator per game (``SeedSequence(seed).spawn``, in game
+order), so with a seeded ``rng`` the records are identical whatever ``n_parallel`` or
+batching is used.
 
 Players
     RandomPlayer     uniform over legal moves.
@@ -24,8 +27,12 @@ Players
                      the empty board without an opening book). Scores are cached by
                      sequence in memory. Slow before ~ply 8 (seconds to minutes a move).
     NetGreedy(vf)    one ply: an immediate win (lowest column) if there is one, else the
-                     argmax of ``1 - vf(child)`` (ties lowest column).
-    NetMCTS(vf, n)   ``mcts.run_batch`` on fresh roots, no noise, temperature-0 policy.
+                     argmax of ``1 - vf(child)`` (ties lowest column). Its only hard-coded
+                     rule is the immediate win. A non-finite value raises ValueError.
+    NetMCTS(vf, n)   ``mcts.run_batch`` on fresh roots with ``shortcuts=True``, no noise,
+                     temperature-0 policy. The shortcuts are hard-coded rules applied at
+                     expansion: an immediate win, and a forced block when the opponent has
+                     a single immediate threat. NetGreedy has only the immediate-win rule.
 """
 import warnings
 from dataclasses import dataclass, field
@@ -95,11 +102,17 @@ class GameState:
         return self.mask == _FULL
 
 
+def _check_rngs(states, rngs):
+    if rngs is None or len(rngs) != len(states) or not all(
+            isinstance(g, np.random.Generator) for g in rngs):
+        raise ValueError("rngs must be a list of np.random.Generator aligned with states")
+
+
 class _Player:
     name = "player"
 
-    def choose(self, state, rng=None):
-        return int(self.choose_many([state], rng)[0])
+    def choose(self, state, rng):
+        return int(self.choose_many([state], [rng])[0])
 
     def __repr__(self):
         return self.name
@@ -110,8 +123,10 @@ class _Player:
 class RandomPlayer(_Player):
     name = "random"
 
-    def choose_many(self, states, rng):
-        return np.array([int(rng.choice(s.legal())) for s in states], dtype=np.int64)
+    def choose_many(self, states, rngs):
+        _check_rngs(states, rngs)
+        return np.array([int(g.choice(s.legal())) for s, g in zip(states, rngs)],
+                        dtype=np.int64)
 
 
 # --- alpha-beta -----------------------------------------------------------------------
@@ -178,12 +193,13 @@ class AlphaBeta(_Player):
         self.depth = int(depth)
         self.name = f"ab{self.depth}"
 
-    def choose_many(self, states, rng):
+    def choose_many(self, states, rngs):
+        _check_rngs(states, rngs)
         out = np.empty(len(states), np.int64)
-        for i, s in enumerate(states):
+        for i, (s, g) in enumerate(zip(states, rngs)):
             sc = alphabeta_root_scores(s, self.depth)
             best = np.flatnonzero(sc == sc.max())
-            out[i] = int(best[0]) if len(best) == 1 else int(rng.choice(best))
+            out[i] = int(best[0]) if len(best) == 1 else int(g.choice(best))
         return out
 
 
@@ -204,7 +220,7 @@ class SolverPlayer(_Player):
                 self.cache[q] = row
         return [self.cache.get(q) for q in seqs]
 
-    def choose_many(self, states, rng=None):
+    def choose_many(self, states, rngs=None):
         out = np.empty(len(states), np.int64)
         for i, (s, row) in enumerate(zip(states, self.scores(states))):
             if row is None:  # empty history
@@ -222,7 +238,7 @@ class NetGreedy(_Player):
         self.value_fn = value_fn
         self.name = name
 
-    def choose_many(self, states, rng=None):
+    def choose_many(self, states, rngs=None):
         out = np.full(len(states), -1, np.int64)
         need = []  # (state index, column, child)
         for i, s in enumerate(states):
@@ -236,7 +252,11 @@ class NetGreedy(_Player):
             X = np.empty((len(need), E.N_CELLS), np.float64)
             for k, (_, _, ch) in enumerate(need):
                 E.encode_into(np.uint64(ch.pos), np.uint64(ch.mask), X[k])
-            score = 1.0 - np.asarray(self.value_fn(X), dtype=np.float64).reshape(-1)
+            v = np.asarray(self.value_fn(X), dtype=np.float64).reshape(-1)
+            if v.shape[0] != len(need) or not np.all(np.isfinite(v)):
+                raise ValueError(f"{self.name}: value_fn returned non-finite or wrongly "
+                                 f"shaped values (shape {v.shape}, expected {len(need)})")
+            score = 1.0 - v
             best = {}
             for (i, c, _), v in zip(need, score):  # columns ascend: strict > keeps lowest
                 if i not in best or v > best[i][1]:
@@ -255,10 +275,10 @@ class NetMCTS(_Player):
         self.c_puct = float(c_puct)
         self.name = name or f"net_mcts{self.n_sims}"
 
-    def choose_many(self, states, rng=None):
+    def choose_many(self, states, rngs=None):
         roots = [mcts.new_root(s.pos, s.mask) for s in states]
         mcts.run_batch(roots, self.value_fn, self.n_sims, rng=None, dirichlet=None,
-                       c_puct=self.c_puct)
+                       c_puct=self.c_puct, shortcuts=True)
         return np.array([int(np.argmax(mcts.policy(r, 0))) for r in roots], dtype=np.int64)
 
 
@@ -269,11 +289,17 @@ def play_games(games, rng, n_parallel=None):
 
     Up to ``n_parallel`` games (default all) are live at once; each step every live game
     gets one move, and each player gets one ``choose_many`` call over its games (first
-    players before second players, games in input order). Openings that are illegal raise;
+    players before second players, games in input order), with the list of those games'
+    generators. One seed is drawn from ``rng`` at the start and spawned into one generator
+    per entry of ``games`` (in input order), so outcomes do not depend on ``n_parallel``
+    or on how games are batched. Openings that are illegal raise;
     openings already terminal are skipped with a warning. Returns one record per played
     game in input order: ``game`` (index into ``games``), ``opening``, ``moves``, ``n_moves``,
     ``result_first`` (1 / 0.5 / 0).
     """
+    seed = int(rng.integers(0, 2**63 - 1))
+    game_rngs = [np.random.default_rng(ss)
+                 for ss in np.random.SeedSequence(seed).spawn(len(games))]
     todo = []
     for gi, (opening, p1, p2) in enumerate(games):
         s = GameState.from_moves(opening)
@@ -304,7 +330,7 @@ def play_games(games, rng, n_parallel=None):
                 groups[key][1].append(g)
         for key in order:
             pl, gs = groups[key]
-            mv = pl.choose_many([g["state"] for g in gs], rng)
+            mv = pl.choose_many([g["state"] for g in gs], [game_rngs[g["gi"]] for g in gs])
             for g, c in zip(gs, mv):
                 g["state"] = g["state"].after(int(c))
         still = []
