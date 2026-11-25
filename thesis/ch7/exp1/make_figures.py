@@ -416,11 +416,12 @@ def _bezier(a, b, rad, t):
     return (1 - t) ** 2 * a + 2 * t * (1 - t) * c + t ** 2 * b
 
 
-def draw_focus(ax, layer, parts, letter, title):
+def draw_focus(ax, layer, parts, letter, title, units=False):
     """Panel: the focus view of ``parts`` (term_parts) drawn from the layer: a grey box per part with its name below;
     small grey circles: its inputs; white circles: hidden units; square +: the part's sum (an identity node). Edge
     colour by weight sign, width by |weight|, each edge with its weight; arrows leaving a box: the part's connections
-    to the rest of the network, with their weight and the part they feed."""
+    to the rest of the network, with their weight and the part they feed. ``units``: the boxes are named Unit 1, 2, ...
+    left to right, the stubs carry no text and the panel title is its letter only (the caption names them)."""
     from matplotlib.patches import Circle, FancyArrowPatch, FancyBboxPatch, Rectangle
     pids = [p["id"] for p in parts]
     drawn, edges, out, inn = focus_view(layer, pids)
@@ -436,11 +437,13 @@ def draw_focus(ax, layer, parts, letter, title):
 
     def colour(w):
         return XOR_EDGE_POS if w > 0 else XOR_EDGE_NEG
+    unit = {q: f"Unit {i + 1}" for i, q in enumerate(sorted(boxes, key=lambda q: boxes[q][0]))}
     for pid, (xa, xb) in boxes.items():
         ax.add_patch(FancyBboxPatch((xa, bottom), xb - xa, top - bottom, boxstyle="round,pad=0,rounding_size=0.18",
                                     fc="0.93", ec="0.55", lw=0.7, zorder=0))
         name = next(p["name"] for p in parts if p["id"] == pid)
-        ax.text((xa + xb) / 2, bottom - 0.1, _part_label(name), ha="center", va="top", fontsize=7.5, style="italic")
+        ax.text((xa + xb) / 2, bottom - 0.1, unit[pid] if units else _part_label(name), ha="center", va="top",
+                fontsize=7.5, style="normal" if units else "italic")
     patch = {}
     for k, dn in sorted(drawn.items()):
         x, y = pos[k]
@@ -494,19 +497,21 @@ def draw_focus(ax, layer, parts, letter, title):
                 rad = arrow(pos[s], (cx, top + 0.62), w, patch[s], None, 0.55, {s}, pid)
                 stubs.append(dict(direction="out", part=pid, node=s, node_ids=drawn[s]["ids"], to=dst, weight=w,
                                   rad=rad))
-            ax.text(cx, top + 0.68, "to the output" if dst == "output" else f"to {_part_label(dst)}", ha="center",
-                    va="bottom", fontsize=6.5, color="0.2")
+            if not units:
+                ax.text(cx, top + 0.68, "to the output" if dst == "output" else f"to {_part_label(dst)}", ha="center",
+                        va="bottom", fontsize=6.5, color="0.2")
     for src, v, w in inn:   # incoming stubs (a leaf whose entries are all inputs has none; drawn if present)
         x, y = pos[v]
         arrow((x - 0.45, y - 0.55), (x, y), w, None, patch[v], 0.3, {v}, drawn[v]["part"])
-        ax.text(x - 0.47, y - 0.6, f"from {_part_label(src)}", ha="center", va="top", fontsize=6, color="0.2")
+        if not units:
+            ax.text(x - 0.47, y - 0.6, f"from {_part_label(src)}", ha="center", va="top", fontsize=6, color="0.2")
         stubs.append(dict(direction="in", part=drawn[v]["part"], node=v, node_ids=drawn[v]["ids"], frm=src, weight=w))
     ax.set_xlim(min(a for a, _ in boxes.values()) - 0.1, max(b for _, b in boxes.values()) + 0.1)
     ax.set_ylim(bottom - 0.42, top + 0.95)
     ax.set_aspect("equal")
     ax.axis("off")
-    ax.set_title(f"({letter}) {title}", loc="left", fontsize=8)
-    return dict(box_order=sorted(boxes, key=lambda q: boxes[q][0]), parts=pids, genome_id=layer["genome_id"], explanation_id=layer["explanation_id"],
+    ax.set_title(f"({letter})" if units else f"({letter}) {title}", loc="left", fontsize=8)
+    return dict(box_order=sorted(boxes, key=lambda q: boxes[q][0]), units=unit if units else None, parts=pids, genome_id=layer["genome_id"], explanation_id=layer["explanation_id"],
                 nodes={k: dict(kind=dn["kind"], part=dn["part"], ids=dn["ids"], pos=pos[k])
                        for k, dn in sorted(drawn.items())},
                 edges=drawn_edges, stubs=stubs)
@@ -622,12 +627,12 @@ def shape_saddle(label, d, fid):
     h, p = np.array(s["heart_rate"]), np.array(s["sbp"])
     net = label == SHAPE_C
     show_part = s["part"] is not None and not net   # Mike, 22 Nov 2026: the shape-C figure drops the "moves most" panel
-    panels = [("(a) Model score", np.array(s["score"]))]
+    panels = [("(a)" if net else "(a) Model score", np.array(s["score"]))]
     if show_part:
         panels.append(("(b) Part that moves most", np.array(s["part"]["contribution"])))
     tl = "(c)" if show_part else "(b)"
     absent = d["task"] == "u"
-    panels.append((f"{tl} True saddle term", np.array(s["truth"])))
+    panels.append((f"{tl}" if net else f"{tl} True saddle term", np.array(s["truth"])))
     Zs = [Z - Z.mean() for _, Z in panels]
     v = max(float(np.max(np.abs(Z))) for Z in Zs) or 1.0
     n = len(panels)
@@ -657,7 +662,7 @@ def shape_saddle(label, d, fid):
             ax.set_xlabel("heart rate (beats/min)")
     axes[0].set_ylabel("systolic BP (mmHg)")
     cb = sf.colorbar(im, ax=list(axes), fraction=0.03, pad=0.02)
-    cb.set_label("logit, mean removed")
+    cb.set_label("logit" if net else "logit, mean removed")
     pdata = dict(heart_rate=h, sbp=p, panels={t: Z for (t, _), Z in zip(panels, Zs)}, vmax=v)
     if net:   # (c, d) model against truth, with the training rows (data.py, the study's generator and split)
         P = sd.prepare(d["task"])
@@ -669,9 +674,8 @@ def shape_saddle(label, d, fid):
         diff = Zs[0] - Zs[-1]   # (a) minus (b), each with its mean removed
         dv = float(np.max(np.abs(diff)))
         for ax, Z, cmap, lim, t, lab, dot in (
-                (ax_agree, np.abs(diff), AGREE_CMAP, (0, dv), "(c) Agreement: $|$model $-$ truth$|$", "logit gap", AGREE_DOT),
-                (ax_dir, diff, DIRECTION_CMAP, (-dv, dv), "(d) Direction: model $-$ truth", "logit, model $-$ truth",
-                 DIRECTION_DOT)):
+                (ax_agree, np.abs(diff), AGREE_CMAP, (0, dv), "(c)", "logit", AGREE_DOT),
+                (ax_dir, diff, DIRECTION_CMAP, (-dv, dv), "(d)", "logit", DIRECTION_DOT)):
             imx = ax.imshow(Z, origin="lower", aspect="auto", cmap=cmap, vmin=lim[0], vmax=lim[1],
                             interpolation="nearest", extent=box)
             ax.scatter(hr, sbp, s=ROWS_DOT, color=dot, alpha=0.45, lw=0)
@@ -687,7 +691,7 @@ def shape_saddle(label, d, fid):
         assert sweep["shown_part"] == s["part"]["id"], (sweep["shown_part"], s["part"]["id"])
         assert s["part"]["id"] in [q["id"] for q in carry], (s["part"]["id"], [q["id"] for q in carry])   # (b)'s part
         pdata["subnetwork"] = dict(rule=dict(term_inputs=TERM_INPUTS["saddle"], share=TERM_SHARE, candidates=cand),
-                                   **draw_focus(ax_net, layer, carry, "e", "The parts that carry the saddle term"))
+                                   **draw_focus(ax_net, layer, carry, "e", "The parts that carry the saddle term", units=True))
         order = pdata["subnetwork"]["box_order"]   # (f) left to right as the boxes of (e)
         axe = sf_ext.subplots(1, len(order), sharey=True)
         axe = np.atleast_1d(axe)
@@ -696,19 +700,24 @@ def shape_saddle(label, d, fid):
             dh, dp = (h[1] - h[0]) / 2, (p[1] - p[0]) / 2
             ax.imshow(Zp[q], origin="lower", aspect="auto", cmap="RdBu_r", vmin=-v, vmax=v, interpolation="nearest",
                       extent=(h[0] - dh, h[-1] + dh, p[0] - dp, p[-1] + dp))
-            ax.set_title(("(f) " if k == 0 else "") + _part_label(names[q]), loc="left", fontsize=8, style="italic")
+            ax.set_title(("(f) " if k == 0 else "") + pdata["subnetwork"]["units"][q], loc="left", fontsize=8)
             ax.set_xlabel("heart rate (beats/min)")
         axe[0].set_ylabel("systolic BP (mmHg)")
         pdata["part_responses"] = {names[q]: Zp[q] for q in order}
         pdata["vmax"] = v
     figlib.save(fig, fid, pdata=pdata)
-    keys_net = ("(a, b, f) The logit with its mean over the grid removed, one scale (red above, blue below); every other "
-                f"input at the typical case; true term $-{sd.BETA_S:g}\\,z_h z_p$. (c, d) (a) minus (b): (c) the size of the "
-                "gap (pale: they agree); (d) its sign (brown: model above the truth; teal: below). Dots: the training rows. "
-                "(e) The parts that carry the term: grey box, one part (name below); grey circles, its inputs; white "
-                "circles, ReLU units; square $+$, the part's sum. Edges: blue positive, red negative, width and label the "
-                "weight; arrows leaving a box, its connections to the rest of the network. (f) Each part of (e), left to "
-                "right: its contribution to the logit.")
+    if net:
+        sub = pdata["subnetwork"]
+        unit_names = "; ".join(f"{sub['units'][q]}, \\emph{{{_part_label(names[q])}}}" for q in sub["box_order"])
+        dests = sorted({st["to"] for st in sub["stubs"] if st["direction"] == "out"})
+        dest = " and ".join("the output" if x == "output" else f"\\emph{{{_part_label(x)}}}" for x in dests)
+        keys_net = (f"(a) The model's score; (b) the true term, $-{sd.BETA_S:g}\\,z_h z_p$; (a, b, f) the logit with its "
+                    "mean over the grid removed, one scale (red above, blue below), every other input at the typical case. "
+                    "(c, d) (a) minus (b): (c) the size of the gap (pale: they agree); (d) its sign (brown: model above the "
+                    "truth; teal: below). Dots: the training rows. (e) The explanation's parts that carry the term "
+                    f"({unit_names}): grey box, one part; grey circles, its inputs; white circles, ReLU units; square $+$, "
+                    "the part's sum. Edges: blue positive, red negative, width and label the weight; arrows leaving a box "
+                    f"feed {dest}. (f) Each unit of (e): its contribution to the logit.")
     keys = (("(a, b, f) " if net else "") + "Colour: the logit with its mean over the grid removed, one scale for all panels (red above the mean, "
             "blue below); every other input at the typical case. "
             + (f"(b) The explanation part whose contribution moves most on the grid "
