@@ -144,6 +144,33 @@ class CaseModel:
                 w[pos[str(c.from_node)]] = float(c.weight)
         return w
 
+    def hidden_units(self):
+        """The phenotype's hidden units (read before any operation, like ``direct_edges``): input weights W
+        [unit, input column] on the standardised inputs, biases b, output weights v, the output bias, and the
+        unit ids in genome order. Asserted: every enabled edge is input -> hidden, hidden -> output or input ->
+        output (one hidden layer), and every hidden unit is a ReLU."""
+        P = self.base.phenotype
+        out = str(P.output_node_ids[0])
+        pos = {str(n): i for i, n in enumerate(P.input_node_ids)}
+        hid = sorted((n for n in P.nodes if str(n.id) not in pos and str(n.id) != out), key=lambda n: int(n.id))
+        assert all(n.activation == "relu" for n in hid), [n.activation for n in hid]
+        ids = [str(n.id) for n in hid]
+        row = {h: k for k, h in enumerate(ids)}
+        W = np.zeros((len(ids), len(self.names)))
+        v = np.zeros(len(ids))
+        for c in P.connections:
+            if not c.enabled:
+                continue
+            a, b = str(c.from_node), str(c.to_node)
+            if a in pos and b in row:
+                W[row[b], pos[a]] = float(c.weight)
+            elif a in row and b == out:
+                v[row[a]] = float(c.weight)
+            else:
+                assert a in pos and b == out, (a, b)
+        b_out = float(next(n.bias for n in P.nodes if str(n.id) == out))
+        return dict(ids=ids, W=W, b=np.array([float(n.bias) for n in hid]), v=v, b_out=b_out)
+
 
 def cell_index(col: str, row: int) -> str:
     return f"c_{col}{row}"

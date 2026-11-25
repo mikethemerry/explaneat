@@ -1057,6 +1057,8 @@ def main(only=None):
     churn_case_figures.build(only)
     import c4_case_figures   # the Connect-4 case: cells direct edges against the lines network (data/c4_case.json)
     c4_case_figures.build(only)
+    import c4_units_figures   # the Connect-4 cells network: wiring, units as boards, square variance (c4_case.json)
+    c4_units_figures.build(only)
     monk2_figures(only)
     shape_figures(only)
     cox_figures(only)

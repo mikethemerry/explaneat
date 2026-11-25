@@ -22,7 +22,8 @@ uv run python thesis/ch7/exp1/extract_networks.py   # data/network_figs.json: ea
                                                     # current explanation; phenotype sizes
 uv run python thesis/ch7/exp1/extract_capgain.py    # data/capgain.json (Adult capital-gain part's response)
 PGOPTIONS='-c default_transaction_read_only=on' \
-  uv run python thesis/ch7/exp1/extract_c4_case.py   # data/c4_case.json (Connect-4 case figure c4-case-contrast;
+  uv run python thesis/ch7/exp1/extract_c4_case.py   # data/c4_case.json (Connect-4 case figures c4-case-contrast,
+                                                    # c4-shared-board, c4-units-all, c4-square-variance;
                                                     # engine experiments/c4_case/probes.py)
 uv run python thesis/ch7/exp1/heart_profiles.py     # data/heart_profiles.json (PROPOSAL data for the Heart
                                                     # cholesterol figure; see HEART_CHOLESTEROL_PROPOSAL.md)

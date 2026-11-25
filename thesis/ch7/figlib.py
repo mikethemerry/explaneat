@@ -50,6 +50,9 @@ USED = (
     "churn-case-net-concept", "churn-case-probes",
     # Experiment 1, the Connect-4 case (22 Nov 2026): cells direct edges against the lines network's response
     "c4-case-contrast",
+    # Experiment 1, the Connect-4 case (25 Nov 2026): the cells network's wiring, its units as boards, and the
+    # square variance
+    "c4-shared-board", "c4-units-all", "c4-square-variance",
 )
 # Figures printed in the Experiment 1 appendix (thesis/ch7/exp1/appendix_networks.tex inlines their floats under
 # their networks), not in the main text (brief of 21 Nov 2026).
