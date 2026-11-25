@@ -84,13 +84,13 @@ def test_solve_cached(tmp_path, monkeypatch):
     seqs = ["4453621", "121212", "2121213"]
     first = S.solve_cached(seqs, path)
     calls = []
-    real = S.solve
+    real = S._run_chunk
 
-    def counting(ss, **kw):
+    def counting(ss, *a, **kw):
         calls.append(list(ss))
-        return real(ss, **kw)
+        return real(ss, *a, **kw)
 
-    monkeypatch.setattr(S, "solve", counting)
+    monkeypatch.setattr(S, "_run_chunk", counting)
     again = S.solve_cached(seqs, path)
     np.testing.assert_array_equal(again, first)
     assert sum(len(c) for c in calls) == 0
@@ -109,6 +109,85 @@ def test_solve_cached_analyse(tmp_path):
     np.testing.assert_array_equal(a, b)
     assert a.shape == (1, 7)
     assert path.read_text().splitlines()[0] == "seq,s0,s1,s2,s3,s4,s5,s6"
+
+
+def test_first_player_scores():
+    seqs = ["121212", "4453621"]
+    sc = S.solve(seqs)
+    fp = S.first_player_scores(seqs, sc)
+    assert fp[0] == sc[0] and fp[1] == -sc[1]
+    a = np.array([[-1000, 1, -2, 0, 3, 4, 5], [1, -1000, 2, 0, -3, 4, 5]])
+    fa = S.first_player_scores(["11", "111"], a)
+    np.testing.assert_array_equal(fa[0], a[0])
+    np.testing.assert_array_equal(fa[1], [-1, -1000, -2, 0, 3, -4, -5])
+
+
+def test_solve_prevalidates(monkeypatch):
+    calls = []
+    monkeypatch.setattr(S, "_run_chunk", lambda *a, **k: calls.append(a))
+    with pytest.raises(ValueError, match="input 2"):
+        S.solve(["121212", "4453621", "1280"])
+    assert calls == []
+
+
+def test_solve_timeout_names_chunk():
+    with pytest.raises(RuntimeError, match="chunk 0"):
+        S.solve(["4"], timeout=1e-4)  # ply 1: takes far longer than the limit
+
+
+def _write(path, text):
+    path.write_bytes(text.encode())
+
+
+@pytest.mark.parametrize("text,match", [
+    ("seq,score\n121212,5,1\n", "line 2"),            # too many fields
+    ("seq,score\n12x212,5\n", "line 2"),              # bad key
+    ("seq,score\n121212,5\n4455,abc\n", "line 3"),    # non-integer
+    ("seq,score\n121212,5\n121212,4\n", "line 3"),    # conflicting duplicate
+    ("seq,score\n121212,5", "newline"),                # truncated
+    ("seq,s0\n121212,5\n", "header"),
+])
+def test_solve_cached_rejects_bad_cache(tmp_path, text, match):
+    path = tmp_path / "c.csv"
+    _write(path, text)
+    with pytest.raises(ValueError, match=match):
+        S.solve_cached(["121212"], path)
+
+
+def test_solve_cached_consistent_duplicate_ok(tmp_path):
+    path = tmp_path / "c.csv"
+    _write(path, "seq,score\n121212,18\n121212,18\n")
+    assert S.solve_cached(["121212"], path)[0] == 18
+
+
+def test_solve_cached_keeps_progress_on_crash(tmp_path, monkeypatch):
+    path = tmp_path / "c.csv"
+    seqs = ["4453621", "121212", "2121213", "4455", "776655", "443322"]
+    real = S._run_chunk
+
+    def failing(ss, analyse, timeout=None, index=0):
+        if index == 1:
+            raise RuntimeError("boom")
+        return real(ss, analyse, timeout, index)
+
+    monkeypatch.setattr(S, "_run_chunk", failing)
+    with pytest.raises(RuntimeError, match="boom"):
+        S.solve_cached(seqs, path, workers=1, chunk=2)
+    kept = [ln.split(",")[0] for ln in path.read_text().splitlines()[1:]]
+    assert kept[:2] == seqs[:2] and "121212" in kept and seqs[2] not in kept
+    calls = []
+
+    def counting(ss, *a, **kw):
+        calls.append(list(ss))
+        return real(ss, *a, **kw)
+
+    monkeypatch.setattr(S, "_run_chunk", counting)
+    got = S.solve_cached(seqs, path, workers=1, chunk=2)
+    solved = [s for c in calls for s in c]
+    assert set(solved) == set(seqs) - set(kept)
+    np.testing.assert_array_equal(got, S.solve(seqs))
+    lines = path.read_text().splitlines()[1:]
+    assert sorted(ln.split(",")[0] for ln in lines) == sorted(seqs)
 
 
 @pytest.mark.slow
