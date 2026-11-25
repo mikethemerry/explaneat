@@ -196,3 +196,28 @@ def test_policy_tie_lowest_column():
     mcts.run_batch([root], ConstValue(0.5), 8)  # 7 children, one visit each
     assert list(mcts.visit_counts(root)) == [1] * 7
     assert list(mcts.policy(root, 0)) == [1, 0, 0, 0, 0, 0, 0]
+
+
+def test_duplicate_roots_rejected():
+    import pytest
+    from netfn import ConstValue
+    r = mcts.new_root(0, 0)
+    with pytest.raises(ValueError):
+        mcts.run_batch([r, r], ConstValue(0.5), 4)
+
+
+def test_immediate_win_found_at_expansion_backs_up_exact_value():
+    # x to move with three in column a ("121212"): the root's first evaluation is the root itself,
+    # expansion finds the win, so the root's value from its parent's view is 0 (the mover wins).
+    from netfn import ConstValue
+    pos = mask = 0
+    for ch in "121212":
+        pos, mask = mcts._play(pos, mask, int(ch) - 1)
+    r = mcts.new_root(pos, mask)
+    mcts.run_batch([r], ConstValue(0.5), 10)
+    # every simulation either evaluates the root (exact 1.0 for the mover) or reaches the winning
+    # terminal child: all backed-up values for the mover are 1.0
+    assert r.N == 10
+    assert r.W == 0.0
+    child = r.children[0]
+    assert child.W / child.N == 1.0

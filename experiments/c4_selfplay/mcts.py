@@ -114,12 +114,16 @@ def new_root(pos, mask) -> Node:
 
 
 def _expand(node, shortcuts):
+    """Create the node's children. Returns True when the side to move has an immediate win
+    (found only with ``shortcuts``): the caller then backs up the exact value 1.0."""
     pos, mask = node.pos, node.mask
     legal = [c for c in range(W) if not (mask >> (7 * c + 5)) & 1]
+    won = False
     if shortcuts:
         wins = [c for c in legal if _is_winning_move(pos, mask, c)]
         if wins:
             legal = wins[:1]
+            won = True
         else:
             opp = pos ^ mask
             threats = [c for c in legal if _is_winning_move(opp, mask, c)]
@@ -129,6 +133,7 @@ def _expand(node, shortcuts):
     for c in legal:
         ch[c] = Node(pos ^ mask, mask | (mask + (1 << (7 * c))))
     node.expanded = True
+    return won
 
 
 def _select(node, c_puct, prior):
@@ -175,6 +180,8 @@ def run_batch(roots, value_fn, n_sims, rng=None, dirichlet=None, c_puct=1.5, sho
     """
     if dirichlet is not None and rng is None:
         raise ValueError("dirichlet noise needs an explicit rng (np.random.Generator)")
+    if len({id(r) for r in roots}) != len(roots):
+        raise ValueError("the same Node is passed twice in roots; trees must be distinct")
     live = [r for r in roots if r.terminal_value is None]
     m = len(live)
     if m == 0 or n_sims <= 0:
@@ -212,7 +219,8 @@ def run_batch(roots, value_fn, n_sims, rng=None, dirichlet=None, c_puct=1.5, sho
             values = np.asarray(value_fn(buf[:k]), dtype=np.float64).reshape(-1).tolist()
             for path, v in zip(pending, values):
                 leaf = path[-1]
-                _expand(leaf, shortcuts)
+                if _expand(leaf, shortcuts):
+                    v = 1.0          # immediate win for the side to move: exact, not the net's guess
                 if dirichlet is not None and len(path) == 1 and leaf.prior is None:
                     _add_noise(leaf, rng, dirichlet)
                 _backup(path, v)
