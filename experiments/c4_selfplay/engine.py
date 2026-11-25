@@ -43,7 +43,11 @@ def can_play(mask, c):
 
 @njit(cache=True)
 def play(pos, mask, c):
-    """Drop a stone for the side to move in column c; returns the new (pos, mask)."""
+    """Drop a stone for the side to move in column c; returns the new (pos, mask).
+
+    No bounds check: the caller must check ``can_play(mask, c)`` first. Playing a full
+    column corrupts the state (the carry spills into the sentinel and the next column).
+    """
     pos, mask = np.uint64(pos), np.uint64(mask)
     new_pos = pos ^ mask  # the opponent's stones: they move next
     new_mask = mask | (mask + bottom_mask(c))
@@ -129,6 +133,10 @@ def _from_cells(v):
 
 
 def from_cells(v):
-    """Inverse of ``encode``: (pos, mask) from a 42-cell side-to-move array."""
+    """Inverse of ``encode``: (pos, mask) from a 42-cell side-to-move array.
+
+    Does no validation (gravity, stone counts, fours are not checked). A Python wrapper,
+    not callable from njit code; jitted callers use ``_from_cells``.
+    """
     pos, mask = _from_cells(np.ascontiguousarray(v, dtype=np.float64))
     return np.uint64(pos), np.uint64(mask)
