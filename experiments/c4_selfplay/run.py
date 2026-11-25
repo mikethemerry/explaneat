@@ -8,13 +8,20 @@ current buffer, resets ``pop.best_genome`` and runs ``--gens`` generations of ba
 + reproduction. The round's champion is the best-fitness genome of that round (fitness is not
 comparable across rounds: the buffer changes). Generation numbers run on across rounds.
 
+Stagnation is judged within a round: at the start of each round (before ``pop.run``, and so
+after a resume) every species' ``fitness_history`` is emptied and its ``last_improved`` set to
+the current generation, so ``max_stagnation`` never compares fitness on different buffers. A
+round of fewer than ``max_stagnation`` generations therefore never removes a species as
+stagnant.
+
     PYTHONHASHSEED=0 uv run python experiments/c4_selfplay/run.py --name s0 --seed 0 \
         --rounds 20 --games 200 --sims 100 --gens 5 --epochs 20 --buffer 4
 
 Outputs (``<run_dir>`` = ``$EXPLANEAT_HOME/c4_selfplay_runs/<name>``, default ``~/.explaneat``):
   <run_dir>/genomes_r<round:03d>.pkl.gz  {generation: {genome_key: genome}} for every
                                          generation of the round (trained, evaluated genomes)
-  <run_dir>/champions.pkl.gz             {round: champion genome}
+  <run_dir>/champions.pkl.gz             {round: {"genome": champion genome, "generation": the
+                                         generation it was evaluated in, "key": genome key}}
   <run_dir>/parents.csv.gz               pop.ancestry_rows() (whole run so far)
   <run_dir>/ckpt.pkl.gz                  checkpoint at the end of the last finished round
   <results>/<name>/rounds.csv            one row per round
@@ -68,7 +75,7 @@ from fitness import neg_bce_fitness  # noqa: E402
 TORCH_THREADS = 1  # the nets are tiny
 DEFAULT_RESULTS = HERE / "results"
 FIELDS = ["round", "gen_start", "gen_end", "buffer_raw", "buffer_unique", "champion_key",
-          "champion_fitness", "champion_nodes", "champion_conns", "selfplay_s", "train_s",
+          "champion_generation", "champion_fitness", "champion_nodes", "champion_conns", "selfplay_s", "train_s",
           "games", "first_win_share", "draw_share", "mean_len"]
 WALL_FIELDS = ("selfplay_s", "train_s")
 # arguments that must match between a checkpoint and the resuming call
@@ -142,24 +149,34 @@ def set_training_data(pop, X, y):
 
 
 def pick_champion(pop, generations, config):
-    """The round's best genome; if NeuralNeat rejects it, the best valid genome of the round."""
-    champ = copy.deepcopy(pop.best_genome)
+    """The round's best genome and its generation; if NeuralNeat rejects it, the best valid
+    genome of the round. ``pop.best_genome`` is already a snapshot (BackpropPopulation deep
+    copies it) and the recorder's genomes are deep copies, so neither is copied again."""
+    champ = pop.best_genome
     try:
         netfn.ValueFn(champ, config)
-        return champ, False
+        return champ, pop.best_generation, False
     except GenomeNotValidError:
         pass
-    cands = sorted((g for pg in generations.values() for g in pg.values()),
-                   key=lambda g: g.fitness, reverse=True)
-    for g in cands:
+    cands = sorted(((gen, g) for gen, pg in sorted(generations.items()) for g in pg.values()),
+                   key=lambda t: t[1].fitness, reverse=True)
+    for gen, g in cands:
         try:
             netfn.ValueFn(g, config)
         except GenomeNotValidError:
             continue
-        logging.warning("champion %d is invalid; using best valid genome %d (fitness %.5f)",
-                        champ.key, g.key, g.fitness)
-        return copy.deepcopy(g), True
+        logging.warning("champion %d is invalid; using best valid genome %d of generation %d "
+                        "(fitness %.5f)", champ.key, g.key, gen, g.fitness)
+        return g, gen, True
     raise RuntimeError("no valid genome in this round")
+
+
+def reset_stagnation(pop):
+    """Start every species' stagnation clock afresh: fitness on a new buffer is not comparable
+    with fitness on the previous one."""
+    for s in pop.species.species.values():
+        s.fitness_history = []
+        s.last_improved = pop.generation
 
 
 def checkpoint_state(pop, config):
@@ -305,7 +322,8 @@ def main(argv=None):
         pop.add_reporter(recorder)
     t0 = time.time()
     for r in range(start_round, args.rounds):
-        player = netfn.ConstValue(0.5) if r == 0 else netfn.ValueFn(champions[r - 1], config)
+        player = (netfn.ConstValue(0.5) if r == 0
+                  else netfn.ValueFn(champions[r - 1]["genome"], config))
         ts = time.time()
         X, y, games = SP.play_games(player, args.games, args.sims, rng, temp_moves=args.temp_moves,
                                     dirichlet=dirichlet)
@@ -321,12 +339,13 @@ def main(argv=None):
         recorder.round, recorder.generations = r, {}
         pop.best_genome = None
         pop.best_generation = None
+        reset_stagnation(pop)
         gen_start = pop.generation
         tt = time.time()
         pop.run(neg_bce_fitness, n=args.gens, nEpochs=args.epochs)
         train_s = time.time() - tt
-        champ, _ = pick_champion(pop, recorder.generations, config)
-        champions[r] = champ
+        champ, champ_gen, _ = pick_champion(pop, recorder.generations, config)
+        champions[r] = {"genome": champ, "generation": champ_gen, "key": champ.key}
 
         gsize = dump(recorder.generations, run_dir / f"genomes_r{r:03d}.pkl.gz")
         dump(champions, run_dir / "champions.pkl.gz")
@@ -336,7 +355,8 @@ def main(argv=None):
         bst = buffer.stats()
         nodes, conns = genome_size(champ)
         row = dict(round=r, gen_start=gen_start, gen_end=pop.generation - 1, buffer_raw=bst["raw"],
-                   buffer_unique=bst["unique"], champion_key=champ.key, champion_fitness=repr(champ.fitness),
+                   buffer_unique=bst["unique"], champion_key=champ.key,
+                   champion_generation=champ_gen, champion_fitness=repr(champ.fitness),
                    champion_nodes=nodes, champion_conns=conns, selfplay_s=round(selfplay_s, 2),
                    train_s=round(train_s, 2), games=len(games),
                    first_win_share=float(np.mean(res == 1.0)), draw_share=float(np.mean(res == 0.5)),
