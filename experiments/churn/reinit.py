@@ -58,6 +58,19 @@ refit on the fit rows. E2 also early-stop fine-tunes the evolved weights
     uv run python experiments/churn/reinit.py --stage network --early-stopping  # -> reinit_network_es.csv
     uv run python experiments/churn/reinit.py --stage feature --early-stopping  # -> reinit_feature_es.csv
     uv run python experiments/churn/reinit.py --stage network --early-stopping --dry-run  # max 8 epochs, no output
+
+Fan-in-scaled arm (RESCUE2_REINIT_PLAN.md, amendment E-K; ``--init kaiming``,
+additive, the N(0,1) outputs are untouched): the same seeds and draws, each
+redrawn weight into node j scaled by sqrt(g / fan_in(j)) (g = 2 into hidden ReLU
+units, 1 into the sigmoid output; fan_in = enabled genes into j in the genome
+being initialised: the evolved genome in E2, the grafted knockout in E1) and
+each redrawn bias set to 0. Outputs ``*_kaiming*.csv``, ``reinit_weights/*_kaiming*.json``.
+
+    uv run python experiments/churn/reinit.py --stage network --init kaiming                    # -> reinit_network_kaiming.csv
+    uv run python experiments/churn/reinit.py --stage network --init kaiming --early-stopping   # -> reinit_network_kaiming_es.csv
+    uv run python experiments/churn/reinit.py --stage feature --init kaiming                    # -> reinit_feature_kaiming.csv
+    uv run python experiments/churn/reinit.py --stage feature --init kaiming --early-stopping   # -> reinit_feature_kaiming_es.csv
+    uv run python experiments/churn/reinit_init_compare.py                                      # N(0,1) vs Kaiming comparison
 """
 
 from __future__ import annotations
@@ -106,6 +119,101 @@ def reinit_all(genome, seed: int):
     for k in sorted(k for k, c in g.connections.items() if c.enabled):
         g.connections[k].weight = float(rng.normal(0.0, 1.0))
     return g
+
+
+# Amendment E-K (RESCUE2_REINIT_PLAN.md): fan-in-scaled (Kaiming / He normal) arm.
+# The N(0,1) draws above are reused unchanged: each redrawn weight into node j is
+# scaled by sqrt(g / fan_in(j)) and each redrawn bias set to 0, so the two arms
+# are paired draw for draw.
+INITS = ("normal", "kaiming")
+
+
+def check_kaiming_config(config):
+    """The gains assume ReLU hidden units and a sigmoid output."""
+    from explaneat.core.neuralneat import get_hidden_activation, get_output_activation
+    acts = (get_hidden_activation(config), get_output_activation(config))
+    if acts != ("relu", "sigmoid"):
+        raise ValueError(f"kaiming arm assumes relu hidden / sigmoid output, got {acts}")
+
+
+def enabled_fan_in(genome) -> Dict[int, int]:
+    """{node id: number of enabled connection genes into it} (the sparse genome fan-in)."""
+    fan: Dict[int, int] = {}
+    for (a, b), c in genome.connections.items():
+        if c.enabled:
+            fan[b] = fan.get(b, 0) + 1
+    return fan
+
+
+def kaiming_scale(genome, config, keys: Iterable[ConnKey], nodes: Iterable[int]):
+    """In place: every weight in ``keys`` times sqrt(g / fan_in(target)) (g = 1
+    into an output node, 2 into a hidden ReLU node; fan-in counted on
+    ``genome``), every bias in ``nodes`` set to 0. Returns {node: fan_in} of the
+    targets."""
+    outputs = set(config.genome_config.output_keys)
+    fan = enabled_fan_in(genome)
+    for k in keys:
+        j = k[1]
+        g = 1.0 if j in outputs else 2.0
+        genome.connections[k].weight = float(genome.connections[k].weight * np.sqrt(g / fan[j]))
+    for n in nodes:
+        genome.nodes[n].bias = 0.0
+    return {j: fan[j] for j in sorted({k[1] for k in keys})}
+
+
+def reinit_kaiming(genome, config, seed: int):
+    """``reinit_all(genome, seed)`` rescaled by ``kaiming_scale``: every enabled
+    weight from N(0, g / fan_in), every node bias 0. Returns (genome, fan-in)."""
+    g = reinit_all(genome, seed)
+    fan = kaiming_scale(g, config, [k for k, c in g.connections.items() if c.enabled],
+                        list(g.nodes))
+    return g, fan
+
+
+def reinit_genome(genome, config, seed: int, init: str):
+    """E2's draw for ``init`` ("normal" = ``reinit_all``, "kaiming" = ``reinit_kaiming``)."""
+    if init == "kaiming":
+        return reinit_kaiming(genome, config, seed)[0]
+    return reinit_all(genome, seed)
+
+
+def graft_init(ko, cfg, donor_genome, donor_sub, ko_keys, sham_seed, init: str):
+    """E1's graft: ``graft_into_knockout(sham_seed=...)``; with init "kaiming" and
+    a sham seed, the grafted weights are rescaled by ``kaiming_scale`` on the
+    grafted genome and the grafted biases set to 0."""
+    gg, rec = gs.graft_into_knockout(ko, cfg, donor_genome, donor_sub,
+                                     knocked_out_keys=ko_keys, sham_seed=sham_seed)
+    if init == "kaiming" and sham_seed is not None:
+        rec["kaiming_fan_in"] = kaiming_scale(
+            gg, cfg, [tuple(k) for k in rec["added_connections"]],
+            [int(v) for v in rec["id_map"].values()])
+    return gg, rec
+
+
+def out_path(path: Path, init: str) -> Path:
+    """reinit_network.csv -> reinit_network_kaiming.csv, reinit_network_es.csv ->
+    reinit_network_kaiming_es.csv (same for weights files); unchanged for "normal"."""
+    if init == "normal":
+        return path
+    stem = path.stem
+    if stem.endswith("_es"):
+        return path.with_name(f"{stem[:-3]}_{init}_es{path.suffix}")
+    return path.with_name(f"{stem}_{init}{path.suffix}")
+
+
+def wfile(name: str, init: str) -> str:
+    """Relative weights file name (``reinit_weights/<name>.json``) for ``init``."""
+    return f"reinit_weights/{out_path(Path(name + '.json'), init).name}"
+
+
+def init_convention(init: str) -> str:
+    base = ("numpy default_rng(seed).normal(0,1): biases of all genome nodes ascending, "
+            "then enabled conns ascending")
+    if init == "kaiming":
+        return (base + "; kaiming (amendment E-K): each weight times sqrt(g/fan_in(target)), "
+                "g = 2 into hidden relu, 1 into the sigmoid output, fan_in = enabled genes "
+                "into the target; every bias 0")
+    return base
 
 
 def train_masked(genome, config, X, y, checkpoints: Sequence[int], seed: int):
@@ -342,7 +450,7 @@ NET_COLUMNS = [
 ]
 
 
-def run_network(dry_run=False, only_seed=None):
+def run_network(dry_run=False, only_seed=None, init="normal"):
     import ext_common as ec
     from sklearn.metrics import roc_auc_score
 
@@ -364,6 +472,8 @@ def run_network(dry_run=False, only_seed=None):
     for ts in topo:
         t0 = time.time()
         g0, cfg, info = ec.load_genome(runs[ts]["genome_id"])
+        if init == "kaiming":
+            check_kaiming_config(cfg)
         units, conns0, bias0 = network_params(g0, cfg)
         p_ev_te = gs.predict_proba(g0, cfg, Xte)
         ev_test = float(roc_auc_score(yte, p_ev_te))
@@ -383,12 +493,13 @@ def run_network(dry_run=False, only_seed=None):
                    n_nontrivial_groups=grp["n_nontrivial_groups"])
         rows.append(ref)
         wjson = {"topology_seed": ts, "genome_id": info["genome_id"],
-                 "init_convention": "numpy default_rng(seed).normal(0,1): biases of all "
-                                    "genome nodes ascending, then enabled conns ascending",
+                 "init_convention": init_convention(init),
                  "evolved": genome_weights_json(g0), "inits": {}}
+        if init == "kaiming":
+            wjson["fan_in"] = {str(k): v for k, v in sorted(enabled_fan_in(g0).items())}
         per_cp = {E: [] for E in cps}
         for s in seeds:
-            gi = reinit_all(g0, s)
+            gi = reinit_genome(g0, cfg, s, init)
             trained = train_masked(gi, cfg, Xtr, ytr, cps, seed=s)
             wjson["inits"][str(s)] = {"initial": genome_weights_json(gi)}
             for E in cps:
@@ -416,7 +527,7 @@ def run_network(dry_run=False, only_seed=None):
                        "dead_units": dead, "n_groups": mt["n_groups"],
                        "max_group_size": mt["max_group_size"],
                        "n_nontrivial_groups": mt["n_nontrivial_groups"],
-                       "weights_file": f"reinit_weights/network_s{ts}.json"}
+                       "weights_file": wfile(f"network_s{ts}", init)}
                 per_cp[E].append((row, z, cE, bE))
                 rows.append(row)
             print(f"s{ts} init {s}: " + "  ".join(
@@ -467,7 +578,9 @@ def run_network(dry_run=False, only_seed=None):
                 "max_group_size": ref["max_group_size"],
                 "n_nontrivial_groups": ref["n_nontrivial_groups"],
                 "_pairs_r": pr, "_pairs_c": pc})
-        (WEIGHTS_DIR / f"network_s{ts}.json").write_text(json.dumps(wjson, separators=(",", ":")))
+        if not dry_run:
+            (HERE / wfile(f"network_s{ts}", init)).write_text(
+                json.dumps(wjson, separators=(",", ":")))
         for sm in summaries[-len(cps):]:
             print(f"s{ts} E{sm['epochs']}: evolved {ev_test:.4f} init median "
                   f"{sm['init_test_auc_median']:.4f} [{sm['init_test_auc_min']:.4f},"
@@ -512,10 +625,9 @@ def run_network(dry_run=False, only_seed=None):
               f"equiv {p['n_equivalent']} dead {p['init_dead_share_pooled']:.3f} "
               f"(evolved {p['evolved_dead_share']:.3f})")
     if dry_run:
-        print("DRY RUN: nothing written (weights JSON written to reinit_weights/ is removed)")
-        (WEIGHTS_DIR / f"network_s{topo[0]}.json").unlink()
+        print("DRY RUN: nothing written")
         return
-    _write(NET_OUT, rows + summaries + pooled, NET_COLUMNS)
+    _write(out_path(NET_OUT, init), rows + summaries + pooled, NET_COLUMNS)
 
 
 def _fmt(v):
@@ -543,6 +655,9 @@ def main():
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--seed", type=int, default=None, help="network: one topology only (debug)")
     ap.add_argument("--case", default=None, help="feature --dry-run: one E1 case id")
+    ap.add_argument("--init", choices=INITS, default="normal",
+                    help="normal: N(0,1) (the original arm); kaiming: amendment E-K, fan-in-scaled "
+                         "He normal, biases 0 -> *_kaiming*.csv")
     ap.add_argument("--early-stopping", action="store_true",
                     help="EARLY_STOPPING_PLAN.md: train on the fit rows with early stopping on "
                          "val_split.json -> reinit_network_es.csv / reinit_feature_es.csv "
@@ -552,18 +667,18 @@ def main():
         if (args.seed is not None or args.case is not None) and not args.dry_run:
             raise SystemExit("--seed / --case are for --dry-run only")
         if args.stage == "network":
-            run_network_es(dry_run=args.dry_run, only_seed=args.seed)
+            run_network_es(dry_run=args.dry_run, only_seed=args.seed, init=args.init)
         else:
-            run_feature_es(dry_run=args.dry_run, only_case=args.case)
+            run_feature_es(dry_run=args.dry_run, only_case=args.case, init=args.init)
         return
     if args.stage == "network":
         if args.seed is not None and not args.dry_run:
             raise SystemExit("--seed is for debugging with --dry-run only")
-        run_network(dry_run=args.dry_run, only_seed=args.seed)
+        run_network(dry_run=args.dry_run, only_seed=args.seed, init=args.init)
     else:
         if args.case is not None and not args.dry_run:
             raise SystemExit("--case is for --dry-run only")
-        run_feature(dry_run=args.dry_run, only_case=args.case)
+        run_feature(dry_run=args.dry_run, only_case=args.case, init=args.init)
 
 
 # ====================================================================== E1 runner
@@ -670,7 +785,7 @@ def grafted_contribution(genome, cfg, X, rec):
     return s
 
 
-def run_feature(dry_run=False, only_case=None):
+def run_feature(dry_run=False, only_case=None, init="normal"):
     import time
 
     import ext_common as ec
@@ -700,6 +815,8 @@ def run_feature(dry_run=False, only_case=None):
         R = load_leaf(ec, runs, rs, rfeat, Xtr, cache)
         A = load_leaf(ec, runs, ds, dfeat, Xtr, cache)
         cfg = R["config"]
+        if init == "kaiming":
+            check_kaiming_config(cfg)
         units = list(A["sub"].hidden_nodes)
         common = {"case": cid, "case_source": source, "recipient_seed": rs,
                   "recipient_genome_id": R["info"]["genome_id"], "recipient_feature": rfeat,
@@ -711,8 +828,7 @@ def run_feature(dry_run=False, only_case=None):
         m_base, _ = ec.evaluate(R["genome"], cfg, data, boot)
 
         def pipeline(sham_seed):
-            gg, rec = gs.graft_into_knockout(ko, cfg, A["genome"], A["sub"],
-                                             knocked_out_keys=ko_keys, sham_seed=sham_seed)
+            gg, rec = graft_init(ko, cfg, A["genome"], A["sub"], ko_keys, sham_seed, init)
             refit, rinf = refit_graft(gg, rec, cfg, Xtr, ytr)
             gft, finf = gs.finetune(refit, cfg, Xtr, ytr, E, rs, mask_phantom=True,
                                     return_info=True)
@@ -767,7 +883,7 @@ def run_feature(dry_run=False, only_case=None):
                        dead_units=dead_ref, n_groups=mt_ref["n_groups"],
                        max_group_size=mt_ref["max_group_size"],
                        n_nontrivial_groups=mt_ref["n_nontrivial_groups"],
-                       weights_file="reinit_weights/feature.json",
+                       weights_file=wfile("feature", init),
                        note="D condition 5 (alias with donor weights, refit + ft); "
                             f"donor-original dead units {dead_donor}")
         ref_row["cos_share_ge_0.9_vs_donor_orig"] = ref_row.pop("cos_share_ge_0_9_vs_donor_orig")
@@ -810,11 +926,14 @@ def run_feature(dry_run=False, only_case=None):
                        dead_units=dead, n_groups=mt_d["n_groups"],
                        max_group_size=mt_d["max_group_size"],
                        n_nontrivial_groups=mt_d["n_nontrivial_groups"],
-                       weights_file="reinit_weights/feature.json")
+                       weights_file=wfile("feature", init))
             row["cos_share_ge_0.9_vs_donor_orig"] = mt_d["share_ge"]
             row["cos_share_ge_0.9_vs_ref_ft"] = mt_r["share_ge"]
             wjson[cid]["inits"][str(s)] = {"conn": [[*k, w] for k, w in sorted(kc.items())],
                                            "bias": {str(k): v for k, v in kb.items()}}
+            if init == "kaiming":
+                wjson[cid]["inits"][str(s)]["fan_in"] = {
+                    str(k): v for k, v in rec["kaiming_fan_in"].items()}
             items.append((row, sk, kc, kb))
             rows.append(row)
             print(f"{cid} init {s}: test {m['test_auc']:.4f} (ref {m_ref['test_auc']:.4f}) "
@@ -910,8 +1029,8 @@ def run_feature(dry_run=False, only_case=None):
     if dry_run:
         print("DRY RUN: nothing written")
         return
-    (WEIGHTS_DIR / "feature.json").write_text(json.dumps(wjson, separators=(",", ":")))
-    _write(FEAT_OUT, rows + summaries + pooled, FEAT_COLUMNS)
+    (HERE / wfile("feature", init)).write_text(json.dumps(wjson, separators=(",", ":")))
+    _write(out_path(FEAT_OUT, init), rows + summaries + pooled, FEAT_COLUMNS)
 
 
 # ====================================================================== early stopping
@@ -970,24 +1089,24 @@ def train_es(genome, config, es, seed: int, es_kwargs=None):
     return gs.finetune(genome, config, es["X_fit"], es["y_fit"], seed=seed, **es_kwargs)
 
 
-def e2_init_es(g0, config, seed: int, es, es_kwargs=None):
+def e2_init_es(g0, config, seed: int, es, es_kwargs=None, init="normal"):
     """E2 with early stopping for one init: the fixed mode's draw
-    ``reinit_all(g0, seed)``, then ``train_es`` with torch seed = ``seed`` (the
-    fixed mode's ``train_masked`` seed). Returns (initial genome, trained, info)."""
-    gi = reinit_all(g0, seed)
+    ``reinit_genome(g0, config, seed, init)``, then ``train_es`` with torch seed =
+    ``seed`` (the fixed mode's ``train_masked`` seed). Returns (initial genome,
+    trained, info)."""
+    gi = reinit_genome(g0, config, seed, init)
     gE, info = train_es(gi, config, es, seed, es_kwargs)
     return gi, gE, info
 
 
 def e1_pipeline(ko, cfg, donor_genome, donor_sub, ko_keys, sham_seed, rs, X_refit, y_refit,
-                train):
+                train, init="normal"):
     """E1's pipeline as in ``run_feature``: ``graft_into_knockout(sham_seed=...)``
     (None = donor weights), study C's readout refit on (X_refit, y_refit), then
     ``train(refit genome, rs)`` -> (genome, info). Returns
     (trained genome, graft record, refit info, train info, grafted genome before refit)."""
     from run_rescue import refit_graft
-    gg, rec = gs.graft_into_knockout(ko, cfg, donor_genome, donor_sub,
-                                     knocked_out_keys=ko_keys, sham_seed=sham_seed)
+    gg, rec = graft_init(ko, cfg, donor_genome, donor_sub, ko_keys, sham_seed, init)
     refit, rinf = refit_graft(gg, rec, cfg, X_refit, y_refit)
     gft, finf = train(refit, rs)
     return gft, rec, rinf, finf, gg
@@ -1022,7 +1141,7 @@ def _val_auc_plain(genome, cfg, es):
             "n_fit": len(es["y_fit"]), "n_val": len(es["y_val"])}
 
 
-def run_network_es(dry_run=False, only_seed=None):
+def run_network_es(dry_run=False, only_seed=None, init="normal"):
     """E2 with early stopping -> reinit_network_es.csv, reinit_weights/network_s<ts>_es.json.
 
     Per topology: an ``evolved`` row (the evolved weights as is, the reference
@@ -1059,6 +1178,8 @@ def run_network_es(dry_run=False, only_seed=None):
     for ts in topo:
         t0 = time.time()
         g0, cfg, info = ec.load_genome(runs[ts]["genome_id"])
+        if init == "kaiming":
+            check_kaiming_config(cfg)
         units, conns0, bias0 = network_params(g0, cfg)
         p_ev_te = gs.predict_proba(g0, cfg, Xte)
         ev_test = float(roc_auc_score(yte, p_ev_te))
@@ -1068,7 +1189,7 @@ def run_network_es(dry_run=False, only_seed=None):
         dead0 = dead_units(hidden_activations(g0, cfg, Xtr), units)
         grp = match_units(units, conns0, bias0, conns0, bias0)
         common = {"topology_seed": ts, "genome_id": info["genome_id"], "n_hidden": len(units),
-                  "evolved_test_auc": ev_test, "weights_file": f"reinit_weights/network_s{ts}_es.json"}
+                  "evolved_test_auc": ev_test, "weights_file": wfile(f"network_s{ts}_es", init)}
         ref = dict(common, kind="evolved", init_seed="", epochs="",
                    n_network_connections=len(conns0), **m0, test_auc_minus_evolved=0.0,
                    logit_r_vs_evolved=1.0, cos_median_vs_evolved=1.0,
@@ -1125,9 +1246,8 @@ def run_network_es(dry_run=False, only_seed=None):
               f"cos {eft['cos_median_vs_evolved']:.3f}", flush=True)
         wjson = {"topology_seed": ts, "genome_id": info["genome_id"],
                  "plan": "EARLY_STOPPING_PLAN.md (6f37967), study E2",
-                 "init_convention": "numpy default_rng(seed).normal(0,1): biases of all "
-                                    "genome nodes ascending, then enabled conns ascending "
-                                    "(same draw as reinit_network.csv)",
+                 "init_convention": init_convention(init)
+                 + f" (same draw as {out_path(NET_OUT, init).name})",
                  "evolved": genome_weights_json(g0),
                  "evolved_esft": dict(genome_weights_json(g_eft),
                                       stop_epoch=f_eft["stop_epoch"],
@@ -1135,7 +1255,7 @@ def run_network_es(dry_run=False, only_seed=None):
                  "inits": {}}
         items = []
         for s in seeds:
-            gi, gE, finf = e2_init_es(g0, cfg, s, es, eskw)
+            gi, gE, finf = e2_init_es(g0, cfg, s, es, eskw, init)
             row, _, z, cE, bE = compare(gE, finf, "init", s, p_eft_te, z_eft, (c_eft, b_eft))
             row["evolved_esft_test_auc"] = eft["test_auc"]
             wjson["inits"][str(s)] = {"initial": genome_weights_json(gi),
@@ -1193,7 +1313,7 @@ def run_network_es(dry_run=False, only_seed=None):
         summaries[-1]["median_cos_share_ge_0.9_vs_evolved"] = _nanmed(
             [r["cos_share_ge_0.9_vs_evolved"] for r in ir])
         if not dry_run:
-            (WEIGHTS_DIR / f"network_s{ts}_es.json").write_text(
+            (HERE / wfile(f"network_s{ts}_es", init)).write_text(
                 json.dumps(wjson, separators=(",", ":")))
         sm = summaries[-1]
         print(f"s{ts} ES: evolved {ev_test:.4f} esft {eft['test_auc']:.4f} init median "
@@ -1253,10 +1373,10 @@ def run_network_es(dry_run=False, only_seed=None):
     if dry_run:
         print("DRY RUN: nothing written")
         return
-    _write(NET_OUT_ES, rows + summaries + [pooled], NET_COLUMNS_ES)
+    _write(out_path(NET_OUT_ES, init), rows + summaries + [pooled], NET_COLUMNS_ES)
 
 
-def run_feature_es(dry_run=False, only_case=None):
+def run_feature_es(dry_run=False, only_case=None, init="normal"):
     """E1 with early stopping -> reinit_feature_es.csv, reinit_weights/feature_es.json.
 
     The fixed mode's cases and draws; the readout refit on the fit rows only;
@@ -1298,6 +1418,8 @@ def run_feature_es(dry_run=False, only_case=None):
         R = load_leaf(ec, runs, rs, rfeat, Xtr, cache)
         A = load_leaf(ec, runs, ds, dfeat, Xtr, cache)
         cfg = R["config"]
+        if init == "kaiming":
+            check_kaiming_config(cfg)
         cfg_holder[0] = cfg
         units = list(A["sub"].hidden_nodes)
         common = {"case": cid, "d_case": d_of.get((rs, rfeat, ds, dfeat), ""),
@@ -1313,7 +1435,7 @@ def run_feature_es(dry_run=False, only_case=None):
 
         def pipeline(sham_seed):
             return e1_pipeline(ko, cfg, A["genome"], A["sub"], ko_keys, sham_seed, rs,
-                               es["X_fit"], es["y_fit"], train)
+                               es["X_fit"], es["y_fit"], train, init)
 
         try:
             g_ref, rec_ref, rinf_ref, finf_ref, _ = pipeline(None)
@@ -1358,7 +1480,7 @@ def run_feature_es(dry_run=False, only_case=None):
                        dead_units=dead_ref, n_groups=mt_ref["n_groups"],
                        max_group_size=mt_ref["max_group_size"],
                        n_nontrivial_groups=mt_ref["n_nontrivial_groups"],
-                       weights_file="reinit_weights/feature_es.json",
+                       weights_file=wfile("feature_es", init),
                        **_es_fields(finf_ref, g_ref, cfg, es, rs),
                        note="alias with donor weights, refit on fit rows + early-stopped ft; "
                             f"donor-original dead units {dead_donor}")
@@ -1404,7 +1526,7 @@ def run_feature_es(dry_run=False, only_case=None):
                        dead_units=dead, n_groups=mt_d["n_groups"],
                        max_group_size=mt_d["max_group_size"],
                        n_nontrivial_groups=mt_d["n_nontrivial_groups"],
-                       weights_file="reinit_weights/feature_es.json",
+                       weights_file=wfile("feature_es", init),
                        **_es_fields(finf, gk, cfg, es, rs))
             row["cos_share_ge_0.9_vs_donor_orig"] = mt_d["share_ge"]
             row["cos_share_ge_0.9_vs_ref_ft"] = mt_r["share_ge"]
@@ -1412,6 +1534,9 @@ def run_feature_es(dry_run=False, only_case=None):
                                            "bias": {str(k): v for k, v in kb.items()},
                                            "stop_epoch": finf["stop_epoch"],
                                            "best_epoch": finf["best_epoch"]}
+            if init == "kaiming":
+                wjson[cid]["inits"][str(s)]["fan_in"] = {
+                    str(k): v for k, v in rec["kaiming_fan_in"].items()}
             items.append((row, sk, kc, kb))
             rows.append(row)
             print(f"{cid} init {s}: test {m['test_auc']:.4f} (ref {m_ref['test_auc']:.4f}) "
@@ -1520,8 +1645,8 @@ def run_feature_es(dry_run=False, only_case=None):
     if dry_run:
         print("DRY RUN: nothing written")
         return
-    (WEIGHTS_DIR / "feature_es.json").write_text(json.dumps(wjson, separators=(",", ":")))
-    _write(FEAT_OUT_ES, rows + summaries + pooled, FEAT_COLUMNS_ES)
+    (HERE / wfile("feature_es", init)).write_text(json.dumps(wjson, separators=(",", ":")))
+    _write(out_path(FEAT_OUT_ES, init), rows + summaries + pooled, FEAT_COLUMNS_ES)
 
 
 if __name__ == "__main__":
