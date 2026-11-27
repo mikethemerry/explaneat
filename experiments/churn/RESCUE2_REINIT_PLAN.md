@@ -174,3 +174,8 @@ arm, its CSVs and weights files stay as recorded and are not rerun or changed.
 
 **Determinism.** Each analysis is run twice. The CSVs and weights files of the two runs must
 be byte-identical before they are committed.
+
+**Status (2026-11-28): paused by Mike before completion.** Round 1 was stopped partway, with
+1–2 of 10 topologies and 4–6 of 35 cases done. No CSVs were written and the partial weights
+files were deleted. No results from this arm are reported. The code (`reinit.py --init
+kaiming`) and `reinit_init_compare.py` stay in place for a later run.
