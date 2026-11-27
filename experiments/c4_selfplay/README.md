@@ -61,7 +61,8 @@ PYTHONHASHSEED=0 uv run python experiments/c4_selfplay/run.py --name pilot --see
 bash experiments/c4_selfplay/run_main.sh
 # 4. Score every round champion (add --final-solver for the solver rung on the last one)
 PYTHONHASHSEED=0 uv run python experiments/c4_selfplay/yardstick.py champions --name main-s0
-# 5. Lineage scoring and jumps: jumps.py (Task 10, to come)
+# 5. Lineage of the final champion: yardstick per generation (resumable), top-5 jumps per metric
+PYTHONHASHSEED=0 uv run python experiments/c4_selfplay/jumps.py --name main-s0 --sims 100 --workers 6
 # Tests
 uv run pytest experiments/c4_selfplay/tests -q
 ```
@@ -70,6 +71,11 @@ uv run pytest experiments/c4_selfplay/tests -q
 
 - `results/<name>/`: `rounds.csv` (per round: buffer, champion key, generation, fitness and size, times,
   game stats), `meta.json`, `config.ini` and `champions_yardstick.csv`.
+- `results/<name>/` from `jumps.py`: `lineage_yardstick.csv` (one row per lineage genome: generation, key, round,
+  training fitness, size, flags, yardstick metrics), `jumps.json` / `jumps.md` (top-5 rises of `move_acc_net`,
+  `uci_auc`, `ladder_ab4_mcts`, `move_acc_mcts`, with the gene diff and boundary vs within round) and
+  `lineage_summary.json`. The chain follows the fitter parent at each crossover and the same key across an
+  elite copy (as `explaneat.analysis.lineage.get_lineage`, which needs database ids).
 - `~/.explaneat/c4_selfplay_runs/<name>/` (not in git): `genomes_rNNN.pkl.gz` (each generation's population),
   `parents.csv.gz`, `champions.pkl.gz` (round -> {genome, generation, key}), `ckpt.pkl.gz`. Logs are in `logs/`.
 
