@@ -240,3 +240,8 @@ it unchanged. Scope: E2 only. E1 already measures the recovery of its single gra
 - **Write-up:** a section in `EXTENSIONS_RESULTS.md`.
 
 **Determinism:** run twice; the CSVs must be byte-identical.
+
+**E-S clarification (2026-11-28, before the Kaiming analysis; found on an N(0,1) dry run used
+only to check the code):** some exits are constant on train in the evolved network itself, so
+they carry no function. They are left out of an annotation's feature r. An annotation with no
+live exit is flagged `excluded` and left out of the counts.
