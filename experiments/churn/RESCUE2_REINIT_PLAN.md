@@ -179,3 +179,64 @@ be byte-identical before they are committed.
 1–2 of 10 topologies and 4–6 of 35 cases done. No CSVs were written and the partial weights
 files were deleted. No results from this arm are reported. The code (`reinit.py --init
 kaiming`) and `reinit_init_compare.py` stay in place for a later run.
+
+**Resumed (2026-11-28, Mike):** E-K is run in full as specified above, both rounds. The
+partial round was discarded. Mike's reasons:
+- N(0,1) is not a justifiable init for backprop on ReLU;
+- it kills about a quarter of the hidden units, and a dead unit cuts every path through it,
+  so the network trained is not the topology as evolved.
+
+## Amendment E-S (2026-11-28): explanatory-structure equivalence under the Kaiming init
+
+Requested by Mike. Written and committed before the analysis is run on any trained Kaiming
+network.
+
+**Why:** equivalent weights and an equivalent explanation are different questions.
+- The matched-unit cosine asks whether the same parameters come back.
+- This test asks whether a re-initialised network breaks down into the same **named features**
+  as the evolved one, computing the same functions in the same places.
+
+A re-init keeps the evolved topology and its node ids, so the evolved explanation applies to
+it unchanged. Scope: E2 only. E1 already measures the recovery of its single grafted feature
+(contribution r vs the donor feature). Init: the Kaiming arm only (decision above).
+
+**Procedure.** For each churn100 topology (10), Kaiming init (seeds 1000–1009) and regime
+(E = 500, E = 2000, early stopping):
+1. Rebuild the trained genome from `reinit_weights/network_s<ts>_kaiming[_es].json`.
+2. Replay the evolved genome's explanation operations on it (`ext_common.explained_state`).
+   The model state must reproduce NeuralNeat on train to 1e-9; a failure is reported.
+3. For every leaf annotation (71 across the 10 topologies), on train:
+   - **Feature r:** the Pearson r between the re-init's and the evolved network's activation
+     at each exit node. The leaf's score is the minimum over its exits.
+     - Pearson is invariant to positive rescaling and shifts (the ReLU symmetry), not to sign.
+       A sign-flipped ReLU feature is a different feature, so r is used, not |r|.
+   - **Readout-role r:** for a leaf with edges into the output, the Pearson r between the
+     re-init's and the evolved network's direct logit contribution, Σ over its exit → output
+     edges of w · a.
+   - **Lost:** an exit that is constant on train in the re-init and not constant in the
+     evolved network. These are dead features, the structural change Mike points to.
+4. Repeat step 3 for composition annotations, as a secondary measure (feature r only).
+
+**Criteria (design choices):**
+- A leaf is **recovered** if its feature r is ≥ 0.9, the same threshold as D2's alias rule.
+- Its **role is recovered** if its readout-role r is ≥ 0.9.
+- An init's **explanation is preserved** if every leaf is recovered.
+- Not tested: whether the named features reconstruct the logit. For the same topology this
+  holds by construction for any weights, and step 2's check already verifies it.
+
+**Outcomes:**
+- per init and regime: the share of leaves recovered, role recovered and lost;
+- whether the explanation is preserved;
+- per topology: medians over the 10 inits;
+- pooled over all leaf × init pairs, with lost leaves counted separately from leaves that are
+  alive but compute something else;
+- per leaf: the number of the 10 inits that recover it, i.e. which named features are robust
+  to the init.
+
+**Output.**
+- **Script:** `reinit_structure.py`.
+- **CSV:** `reinit_structure_kaiming.csv`, one row per leaf × init × regime, plus composition,
+  summary and pooled rows.
+- **Write-up:** a section in `EXTENSIONS_RESULTS.md`.
+
+**Determinism:** run twice; the CSVs must be byte-identical.
