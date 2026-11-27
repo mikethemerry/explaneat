@@ -52,6 +52,12 @@ _FULL = sum(((1 << E.H) - 1) << (7 * c) for c in range(W))
 # Design choice: two-ply openings whose first move is in a central column (0-based 2, 3, 4),
 # any reply: 3 x 7 = 21 openings, each played with both colours.
 OPENINGS_2PLY = [[a, b] for a in (2, 3, 4) for b in range(W)]
+# Design choice (yardstick v2, less noisy ladder): every three-ply opening whose first move is
+# in a central column (2, 3, 4), any second and third move: 3 x 7 x 7 = 147 openings, each
+# played with both colours = 294 games per opponent (v1's 21 two-ply openings give 42). No
+# three-ply sequence can fill a column or win, so every one is legal and non-terminal.
+OPENINGS_3PLY = [[a, b, c] for a in (2, 3, 4) for b in range(W) for c in range(W)]
+OPENING_SETS = {"2ply": OPENINGS_2PLY, "3ply": OPENINGS_3PLY}
 
 
 # --- state ----------------------------------------------------------------------------

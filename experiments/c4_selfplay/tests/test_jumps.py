@@ -3,6 +3,8 @@ determinism w.r.t. --workers, resume."""
 import copy
 import csv
 import gzip
+import json
+import math
 import os
 import pickle
 import random
@@ -223,3 +225,109 @@ def test_scoring_deterministic_across_workers_and_resume(tiny):
     with pytest.raises(SystemExit):
         J.run("t", runs_dir=tmp / "home" / "c4_selfplay_runs", results_dir=r1, sims=5,
               workers=1, parts=("moves",), log=lambda *a: None)
+
+
+
+# --- yardstick v2 options: ladder subsampling and the settings guard ------------------
+
+def test_ladder_generations():
+    chain = [dict(generation=g, key=1 if g < 3 else 2) for g in range(8)]
+    champs = {(3, 2)}
+    assert J.ladder_generations(chain, 1, champs) == set(range(8))
+    assert J.ladder_generations(chain, 4, champs) == {0, 3, 4, 7}   # 3 champion, 7 final
+    assert J.ladder_generations(chain, 100, set()) == {0, 7}
+
+
+def test_ladder_nan_and_roundtrip(tmp_path):
+    base = dict(round=0, fitness=0.0, n_nodes=1, n_conns=2, is_elite_copy=0,
+                is_round_champion=0, valid=1, positions_set="10k", openings_set="3ply")
+    rows = [dict(base, generation=0, key=1, move_acc_net=0.5, ladder_scored=1,
+                 ladder_ab4_mcts=0.25, ladder_ab4_mcts_se=0.1),
+            dict(base, generation=1, key=1, move_acc_net=0.6, ladder_scored=0)]
+    p = tmp_path / "x.csv"
+    J.write_rows(p, rows)
+    back = J.read_rows(p)
+    assert back[0]["ladder_ab4_mcts"] == 0.25 and back[0]["positions_set"] == "10k"
+    assert math.isnan(back[1]["ladder_ab4_mcts"]) and math.isnan(back[1]["ladder_ab4_mcts_se"])
+    assert back[1]["move_acc_net"] == 0.6 and back[1]["openings_set"] == "3ply"
+    assert "ladder_ab4_mcts" not in rows[1]          # write_rows does not touch its input
+
+
+def test_jumps_skip_rows_without_ladder():
+    a, b = _genomes()
+    genomes = {g: {1: a} for g in range(4)}
+    genomes[3] = {2: b}
+    base = dict(fitness=0.0, n_nodes=1, n_conns=40, is_elite_copy=0, is_round_champion=0,
+                valid=1, round=0)
+    nan = float("nan")
+    rows = [dict(base, generation=0, key=1, move_acc_net=0.5, ladder_ab4_mcts=0.2),
+            dict(base, generation=1, key=1, move_acc_net=0.6, ladder_ab4_mcts=nan),
+            dict(base, generation=2, key=1, move_acc_net=0.4, ladder_ab4_mcts=nan),
+            dict(base, generation=3, key=2, move_acc_net=0.7, ladder_ab4_mcts=0.6)]
+    js = J.find_jumps(rows, genomes, metrics=("move_acc_net", "ladder_ab4_mcts"))
+    (lj,) = js["ladder_ab4_mcts"]
+    assert (lj["from_generation"], lj["to_generation"]) == (0, 3)
+    assert lj["gap_generations"] == 3 and lj["delta"] == pytest.approx(0.4)
+    assert [(j["from_generation"], j["to_generation"]) for j in js["move_acc_net"]] == \
+        [(0, 1), (2, 3)]
+
+
+def test_settings_guard(tmp_path):
+    base = dict(round=0, fitness=0.0, n_nodes=1, n_conns=2, is_elite_copy=0,
+                is_round_champion=0, valid=1, generation=0, key=1)
+    p = tmp_path / "l.csv"
+    J.write_rows(p, [dict(base, positions_set="v1", openings_set="2ply")])
+    J._check_csv_settings(p, "v1", "2ply")
+    with pytest.raises(SystemExit, match="positions=v1"):
+        J._check_csv_settings(p, "10k", "2ply")
+    with pytest.raises(SystemExit):
+        J._check_csv_settings(p, "v1", "3ply")
+    J.write_rows(p, [base])                  # a row from before the v2 columns counts as v1
+    J._check_csv_settings(p, "v1", "2ply")
+    with pytest.raises(SystemExit):
+        J._check_csv_settings(p, "10k", "3ply")
+    J._check_csv_settings(tmp_path / "missing.csv", "10k", "3ply")
+    assert J.output_names()["csv"] == "lineage_yardstick.csv"
+    assert J.output_names("10k", "3ply") == dict(
+        csv="lineage_yardstick_10k_3ply.csv", meta="lineage_yardstick_10k_3ply.meta.json",
+        summary="lineage_summary_10k_3ply.json", json="jumps_10k_3ply.json",
+        md="jumps_10k_3ply.md")
+
+
+@pytest.mark.slow
+def test_ladder_every_and_guard_end_to_end(tiny):
+    tmp, head = tiny
+    rd = _results(tmp, head, "le")
+    runs = tmp / "home" / "c4_selfplay_runs"
+    kw = dict(runs_dir=runs, results_dir=rd, sims=4, workers=2, parts=("moves", "ladder"),
+              log=lambda *a: None)
+    out = J.run("t", ladder_every=2, **kw)
+    rows = {r["generation"]: r for r in J.read_rows(rd / "t" / "lineage_yardstick.csv")}
+    assert sorted(rows) == [0, 1, 2, 3]
+    champs = {r["generation"] for r in rows.values() if r["is_round_champion"] == 1}
+    want = {0, 2, 3} | champs
+    for g, r in rows.items():
+        assert r["ladder_scored"] == int(g in want), g
+        assert r["positions_set"] == "v1" and r["openings_set"] == "2ply"
+        if g in want:
+            assert math.isfinite(r["ladder_ab4_mcts"]) and r["ladder_n_games"] == 42
+        else:
+            assert math.isnan(r["ladder_ab4_mcts"]) and math.isnan(r["ladder_n_games"])
+        assert math.isfinite(r["move_acc_net"])
+    for js in out["jumps"].get("ladder_ab4_mcts", []):
+        assert js["from_generation"] in want and js["to_generation"] in want
+    meta = json.loads((rd / "t" / "lineage_yardstick.meta.json").read_text())
+    assert (meta["positions"], meta["openings"], meta["ladder_every"]) == ("v1", "2ply", 2)
+    # the guard refuses another ladder-every on the same files (other positions / openings
+    # go to their own files: checked below)
+    with pytest.raises(SystemExit):
+        J.run("t", ladder_every=1, **kw)
+    # an old meta without the v2 keys is read as v1 settings
+    old = {k: v for k, v in meta.items() if k not in ("positions", "openings", "ladder_every")}
+    (rd / "t" / "lineage_yardstick.meta.json").write_text(json.dumps(old))
+    with pytest.raises(SystemExit):
+        J.run("t", ladder_every=2, **kw)      # old meta = ladder_every 1: refused
+    # a v2 setting writes its own files; a v1 csv copied under the v2 name is refused
+    shutil.copy(rd / "t" / "lineage_yardstick.csv", rd / "t" / "lineage_yardstick_v1_3ply.csv")
+    with pytest.raises(SystemExit, match="openings=2ply"):
+        J.run("t", openings="3ply", **kw)

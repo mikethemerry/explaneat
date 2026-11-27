@@ -42,6 +42,17 @@ second: the network stays small (42 cells in, one sigmoid out) so it can go thro
   reporting preservation of the game-theoretic result per outcome class.
 - **Ply 8 limit:** the solver has no opening book, so it can't play or label positions before ply 8.
 
+**Yardstick v2 (optional, less noisy; v1 stays the default so existing scores remain comparable):**
+- `--positions 10k`: move accuracy on 10,000 solved positions (`positions_10k.csv`, same rules as v1, seed 1,
+  built independently of v1 and deduplicated within; SE of a share ~0.004 against ~0.009 on 2,000).
+- `--openings 3ply`: the ladder over all 147 three-ply openings with a central first move, both colours = 294
+  games per opponent (42 in v1; SE of a match score ~0.025 against ~0.07).
+- Every score has a standard error `<metric>_se`, and every row records `positions_set`, `openings_set`,
+  `move_n` and `ladder_n_games`. Non-default settings write to their own files (suffix `_<positions>_<openings>`).
+- About 85 s per genome at 200 simulations (constant-0.5 value, one core): ~45 s moves, ~40 s ladder.
+- `jumps.py --ladder-every k` scores the ladder only every k-th generation (plus round champions and the final
+  champion); the other rows get NaN ladder metrics, and ladder jumps are taken between ladder-scored rows.
+
 Reference points, using a constant-0.5 value (all knowledge then comes from the search and its two rules):
 - move accuracy is 0.61 with the net alone and 0.80 with MCTS;
 - with MCTS it scores 0.57 against alpha-beta depth 4.
@@ -54,6 +65,7 @@ Reference points, using a constant-0.5 value (all knowledge then comes from the 
 PYTHONHASHSEED=0 uv run python experiments/c4_selfplay/yardstick.py build-uci              # ~50 min, 12 workers
 PYTHONHASHSEED=0 uv run python experiments/c4_selfplay/yardstick.py build-positions --n 2000 --seed 0
 PYTHONHASHSEED=0 uv run python experiments/c4_selfplay/yardstick.py build-solver-openings --n 50 --seed 0
+PYTHONHASHSEED=0 uv run python experiments/c4_selfplay/yardstick.py build-positions --n 10000 --seed 1 --tag 10k --workers 4  # v2, ~10 min
 # 2. Pilot (5 rounds, ~6 min)
 PYTHONHASHSEED=0 uv run python experiments/c4_selfplay/run.py --name pilot --seed 0 --rounds 5 \
     --games 200 --sims 100 --gens 5 --epochs 20 --buffer 4 --fresh
@@ -63,6 +75,7 @@ bash experiments/c4_selfplay/run_main.sh
 PYTHONHASHSEED=0 uv run python experiments/c4_selfplay/yardstick.py champions --name main-s0
 # 5. Lineage of the final champion: yardstick per generation (resumable), top-5 jumps per metric
 PYTHONHASHSEED=0 uv run python experiments/c4_selfplay/jumps.py --name main-s0 --sims 100 --workers 6
+#    v2 yardstick (own output files): add --positions 10k --openings 3ply [--ladder-every 5] (also on step 4)
 # Tests
 uv run pytest experiments/c4_selfplay/tests -q
 ```

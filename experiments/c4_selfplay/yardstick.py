@@ -8,6 +8,16 @@ Builds (deterministic; outputs under ``<results-dir>/yardstick/``, default
     uv run python experiments/c4_selfplay/yardstick.py build-solver-openings --n 50 --seed 0
     uv run python experiments/c4_selfplay/yardstick.py champions --name s0 [--final-solver]
 
+Yardstick v2 options (v1 stays the default, so existing scores remain comparable):
+``--positions 10k`` scores move accuracy on ``positions_10k.csv`` (10,000 positions, built
+with ``build-positions --n 10000 --seed 1 --tag 10k``; same rules as v1, independent of it,
+deduplicated within) and ``--openings 3ply`` plays the ladder over ``OPENINGS_3PLY`` (147
+openings x 2 colours = 294 games per opponent). Non-default settings write to
+``champions_yardstick_<positions>_<openings>.csv``. Every score dict carries
+``positions_set``, ``openings_set``, ``move_n`` and ``ladder_n_games``, and a standard error
+``<metric>_se`` for each rate (binomial sqrt(p(1-p)/n) for shares; sd/sqrt(n) of the per-game
+results for match scores; Hanley-McNeil for the AUC; sd/sqrt(n) of squared errors for Brier).
+
 ``champions`` reads ``<runs-dir>/<name>/champions.pkl.gz`` ({round: {"genome", "generation",
 "key"}}, written by run.py) and the run's NEAT config ``<results-dir>/<name>/config.ini``
 (required unless ``--config`` names one), and writes
@@ -25,7 +35,8 @@ keeps the rounds already scored.
     (testing only; recorded in ``uci_check.json``). Cache: ``uci_solve_cache.csv``
     (seq-keyed). ``load_uci_solved`` refuses the csv unless ``uci_check.json`` records no
     mismatch and its row count, and (unless ``allow_partial``) all 67,557 rows.
-``build-positions`` -> ``positions.csv`` (``seq,ply,s0..s6``): positions from games between
+``build-positions`` -> ``positions.csv`` (``seq,ply,s0..s6``; with ``--tag t``:
+    ``positions_<t>.csv`` and cache ``positions_<t>_solve_cache.csv``): positions from games between
     RandomPlayer, AlphaBeta(2), AlphaBeta(4) (all 9 ordered pairings, round-robin over
     games, from the empty board). One position per game, its ply drawn uniformly from
     8..min(30, game length - 1) (non-terminal by construction), deduplicated by position
@@ -45,7 +56,8 @@ Scores (``score_value_fn`` / ``score_genome``):
         position: any legal move is correct), blunder iff sign(s_chosen) < sign(s_best),
         opt iff s_chosen == s_best (exactly optimal, secondary).
     ladder_<opp>_<m> (+ _w, _d, _l)            ``match_score`` of the net player against
-        random, ab2, ab4, ab6 over OPENINGS_2PLY, each opening with both colours.
+        random, ab2, ab4, ab6 over OPENINGS_2PLY (or OPENINGS_3PLY), each opening with both
+        colours.
     solver rung ("solver" in parts)            see ``solver_rung`` (solver_first_*,
         solver_preserve_{won,drawn,lost} (+ _n), solver_second_moves).
 """
@@ -87,10 +99,54 @@ POS_BATCH = 90               # games per play_games call (a constant: keeps buil
 LADDER_OPPS = ("random", "ab2", "ab4", "ab6")
 MODES = ("net", "mcts")
 CLASS_NAMES = ("loss", "draw", "win")   # index = sign(score) + 1
+# Yardstick v2 options (v1 stays the default so existing scores remain comparable):
+# positions set -> build tag of its file (None = the v1 positions.csv, 2,000 positions;
+# "10k" = positions_10k.csv, 10,000 positions from build-positions --n 10000 --seed 1 --tag 10k).
+POSITION_SETS = {"v1": None, "10k": "10k"}
+OPENINGS_SETS = tuple(O.OPENING_SETS)   # "2ply" (v1: 21 openings), "3ply" (147)
+DEFAULT_POSITIONS, DEFAULT_OPENINGS = "v1", "2ply"
+
+
+def settings_suffix(positions=DEFAULT_POSITIONS, openings=DEFAULT_OPENINGS):
+    """Output-file suffix for a yardstick setting: "" for v1 (positions v1, 2-ply ladder: the
+    original file names), else ``_<positions>_<openings>``, so scores under different
+    settings land in different files and never overwrite or mix with each other."""
+    check_settings(positions, openings)
+    if (positions, openings) == (DEFAULT_POSITIONS, DEFAULT_OPENINGS):
+        return ""
+    return f"_{positions}_{openings}"
+
+
+def check_settings(positions, openings):
+    if positions not in POSITION_SETS:
+        raise ValueError(f"unknown positions set {positions!r} (one of {sorted(POSITION_SETS)})")
+    if openings not in O.OPENING_SETS:
+        raise ValueError(f"unknown openings set {openings!r} (one of {sorted(O.OPENING_SETS)})")
 
 
 def ydir(results_dir) -> Path:
     return Path(results_dir) / "yardstick"
+
+
+def _binom_se(p, n):
+    """Binomial standard error of a share ``p`` over ``n`` items: sqrt(p (1 - p) / n)."""
+    return float(np.sqrt(p * (1.0 - p) / n)) if n > 0 else float("nan")
+
+
+def _mean_se(x):
+    """Standard error of the mean of ``x``: sample sd (ddof 1) / sqrt(n); nan if n < 2."""
+    x = np.asarray(x, dtype=np.float64)
+    return float(x.std(ddof=1) / np.sqrt(len(x))) if len(x) > 1 else float("nan")
+
+
+def _auc_se(auc, n_pos, n_neg):
+    """Hanley & McNeil (1982) standard error of an AUC with n_pos positives, n_neg negatives."""
+    if not (n_pos > 0 and n_neg > 0 and np.isfinite(auc)):
+        return float("nan")
+    q1, q2 = auc / (2 - auc), 2 * auc ** 2 / (1 + auc)
+    var = (auc * (1 - auc) + (n_pos - 1) * (q1 - auc ** 2) + (n_neg - 1) * (q2 - auc ** 2)) \
+        / (n_pos * n_neg)
+    return float(np.sqrt(max(var, 0.0)))
 
 
 def _sign(x):
@@ -254,23 +310,39 @@ def generate_positions(n, seed=0):
     return out
 
 
-def build_positions(results_dir=DEFAULT_RESULTS, n=2000, seed=0, workers=12, log=print):
+def positions_files(tag=None):
+    """(positions csv, solve cache) file names for a build tag: no tag -> the v1 names
+    ``positions.csv`` / ``positions_solve_cache.csv``; tag t -> ``positions_<t>.csv`` /
+    ``positions_<t>_solve_cache.csv``."""
+    if tag in (None, ""):
+        return "positions.csv", "positions_solve_cache.csv"
+    tag = str(tag)
+    if not tag.replace("_", "").replace("-", "").isalnum():
+        raise ValueError(f"bad positions tag {tag!r}: letters, digits, '-' and '_' only")
+    return f"positions_{tag}.csv", f"positions_{tag}_solve_cache.csv"
+
+
+def build_positions(results_dir=DEFAULT_RESULTS, n=2000, seed=0, workers=12, tag=None,
+                    log=print):
     t0 = time.time()
     out = ydir(results_dir)
+    csv_name, cache_name = positions_files(tag)
     pos = generate_positions(n, seed)
     log(f"build-positions: {len(pos)} positions generated in {time.time() - t0:.1f} s; solving")
     seqs = [s for s, _ in pos]
-    a = S.solve_cached(seqs, out / "positions_solve_cache.csv", analyse=True, workers=workers,
+    a = S.solve_cached(seqs, out / cache_name, analyse=True, workers=workers,
                        chunk=_chunk(len(seqs), workers))
-    _write_csv(out / "positions.csv", ["seq", "ply"] + [f"s{k}" for k in range(7)],
+    _write_csv(out / csv_name, ["seq", "ply"] + [f"s{k}" for k in range(7)],
                [[s, p] + [int(x) for x in row] for (s, p), row in zip(pos, a)])
-    log(f"build-positions: wrote {out / 'positions.csv'} ({time.time() - t0:.1f} s)")
-    return out / "positions.csv"
+    log(f"build-positions: wrote {out / csv_name} ({time.time() - t0:.1f} s)")
+    return out / csv_name
 
 
-def load_positions(results_dir=DEFAULT_RESULTS):
-    """(states [GameState], ply int[n], scores int[n, 7]) from positions.csv."""
-    _, body = _read_csv(ydir(results_dir) / "positions.csv")
+def load_positions(results_dir=DEFAULT_RESULTS, positions="v1"):
+    """(states [GameState], ply int[n], scores int[n, 7]) from the positions set
+    ``positions`` (a key of POSITION_SETS: "v1" = positions.csv, "10k" = positions_10k.csv)."""
+    check_settings(positions, DEFAULT_OPENINGS)
+    _, body = _read_csv(ydir(results_dir) / positions_files(POSITION_SETS[positions])[0])
     states = [O.GameState.from_moves([int(ch) - 1 for ch in r[0]]) for r in body]
     ply = np.array([int(r[1]) for r in body], dtype=np.int64)
     sc = np.array([[int(x) for x in r[2:9]] for r in body], dtype=np.int64)
@@ -344,8 +416,13 @@ def uci_metrics(value_fn, X, scores):
     pred = np.where(v < 1 / 3, 0, np.where(v > 2 / 3, 2, 1))
     target = true / 2.0
     auc = float(roc_auc_score(win, v)) if 0 < win.sum() < len(win) else float("nan")
-    return {"uci_auc": auc, "uci_wdl_acc": float((pred == true).mean()),
-            "uci_brier": float(np.mean((v - target) ** 2)), "uci_n": int(len(X))}
+    acc = float((pred == true).mean())
+    sq = (v - target) ** 2
+    n_pos = int(win.sum())
+    return {"uci_auc": auc, "uci_auc_se": _auc_se(auc, n_pos, len(X) - n_pos),
+            "uci_wdl_acc": acc, "uci_wdl_acc_se": _binom_se(acc, len(X)),
+            "uci_brier": float(np.mean(sq)), "uci_brier_se": _mean_se(sq),
+            "uci_n": int(len(X))}
 
 
 def move_metrics(player, states, scores, suffix):
@@ -362,17 +439,29 @@ def move_metrics(player, states, scores, suffix):
         raise ValueError(f"{player.name} chose a full column")
     best = np.where(scores == -1000, np.iinfo(np.int64).min, scores).max(axis=1)
     s_c, s_b = _sign(sc), _sign(best)
-    return {f"move_acc_{suffix}": float((s_c == s_b).mean()),
-            f"blunder_{suffix}": float((s_c < s_b).mean()),
-            f"move_opt_{suffix}": float((sc == best).mean())}
+    n = len(states)
+    out = {f"move_acc_{suffix}": float((s_c == s_b).mean()),
+           f"blunder_{suffix}": float((s_c < s_b).mean()),
+           f"move_opt_{suffix}": float((sc == best).mean())}
+    for k in list(out):
+        out[f"{k}_se"] = _binom_se(out[k], n)
+    return out
 
 
-def ladder_metrics(player, opp_name, mode, seed):
-    recs = O.play_match(player, make_opponent(opp_name), O.OPENINGS_2PLY,
+def ladder_metrics(player, opp_name, mode, seed, openings=DEFAULT_OPENINGS):
+    """Match score of ``player`` against ``opp_name`` over the opening set ``openings`` (a key
+    of ``opponents.OPENING_SETS``), each opening with both colours; ``_se`` is the standard
+    error of the mean per-game result (1 / 0.5 / 0)."""
+    check_settings(DEFAULT_POSITIONS, openings)
+    recs = O.play_match(player, make_opponent(opp_name), O.OPENING_SETS[openings],
                         rng=np.random.default_rng(seed))
+    if len(recs) != 2 * len(O.OPENING_SETS[openings]):
+        raise RuntimeError(f"ladder {openings}: {len(recs)} games played, expected "
+                           f"{2 * len(O.OPENING_SETS[openings])} (a terminal opening?)")
     res = np.array([r["result_a"] for r in recs])
     k = f"ladder_{opp_name}_{mode}"
-    return {k: O.match_score(recs), f"{k}_w": int((res == 1.0).sum()),
+    return {k: O.match_score(recs), f"{k}_se": _mean_se(res),
+            f"{k}_w": int((res == 1.0).sum()),
             f"{k}_d": int((res == 0.5).sum()), f"{k}_l": int((res == 0.0).sum())}
 
 
@@ -415,6 +504,7 @@ def solver_rung(player, openings, seed=0):
     second_moves = [sum(1 for k in range(8, r["n_moves"]) if k % 2 == 1)
                     for r in recs if not net_first[r["game"]]]
     out = {"solver_first_score": float(res[nf].mean()),
+           "solver_first_score_se": _mean_se(res[nf]),
            "solver_first_theory": float(th[nf].mean()),
            "solver_first_win_kept": (float(res[won_first].mean()) if won_first.any()
                                      else float("nan")),
@@ -423,6 +513,7 @@ def solver_rung(player, openings, seed=0):
     for name, t in (("won", 1.0), ("drawn", 0.5), ("lost", 0.0)):
         m = th == t
         out[f"solver_preserve_{name}"] = float((res[m] == t).mean()) if m.any() else float("nan")
+        out[f"solver_preserve_{name}_se"] = _binom_se(out[f"solver_preserve_{name}"], int(m.sum()))
         out[f"solver_preserve_{name}_n"] = int(m.sum())
     return out
 
@@ -432,22 +523,29 @@ class _Data:
     _cache = {}
 
     @classmethod
-    def get(cls, results_dir, what, allow_partial=False):
+    def get(cls, results_dir, what, allow_partial=False, positions=DEFAULT_POSITIONS):
         key = (str(Path(results_dir).resolve()), what,
-               bool(allow_partial) if what == "uci" else False)
+               bool(allow_partial) if what == "uci" else False,
+               positions if what == "moves" else None)
         if key not in cls._cache:
             cls._cache[key] = {"uci": lambda: load_uci_solved(results_dir, allow_partial),
-                               "moves": lambda: load_positions(results_dir),
+                               "moves": lambda: load_positions(results_dir, positions),
                                "solver": lambda: load_solver_openings(results_dir)}[what]()
         return cls._cache[key]
 
 
 def score_value_fn(value_fn, sims=200, parts=("uci", "moves", "ladder"), seed=0,
                    results_dir=DEFAULT_RESULTS, ladder_opps=LADDER_OPPS, modes=MODES,
-                   allow_partial=False):
+                   allow_partial=False, positions=DEFAULT_POSITIONS,
+                   openings=DEFAULT_OPENINGS):
     """All yardstick numbers for one value function (dict, sorted keys). ``allow_partial``
-    accepts a ``--limit`` UCI build (testing only)."""
-    out = {}
+    accepts a ``--limit`` UCI build (testing only). ``positions`` ("v1" | "10k") picks the
+    move-accuracy positions file, ``openings`` ("2ply" | "3ply") the ladder's opening set;
+    the defaults are yardstick v1. Every dict records the setting (``positions_set``,
+    ``openings_set``) and, for the parts scored, ``move_n`` (positions) and
+    ``ladder_n_games`` (games per opponent)."""
+    check_settings(positions, openings)
+    out = {"positions_set": positions, "openings_set": openings}
     for p in parts:
         if p not in ("uci", "moves", "ladder", "solver"):
             raise ValueError(f"unknown part {p!r}")
@@ -455,14 +553,16 @@ def score_value_fn(value_fn, sims=200, parts=("uci", "moves", "ladder"), seed=0,
         _, X, sc = _Data.get(results_dir, "uci", allow_partial)
         out.update(uci_metrics(value_fn, X, sc))
     if "moves" in parts:
-        states, _, sc = _Data.get(results_dir, "moves")
+        states, _, sc = _Data.get(results_dir, "moves", positions=positions)
+        out["move_n"] = int(len(states))
         for m in modes:
             out.update(move_metrics(make_player(value_fn, m, sims), states, sc, m))
     if "ladder" in parts:
+        out["ladder_n_games"] = 2 * len(O.OPENING_SETS[openings])
         for m in modes:
             pl = make_player(value_fn, m, sims)
             for opp in ladder_opps:
-                out.update(ladder_metrics(pl, opp, m, seed))
+                out.update(ladder_metrics(pl, opp, m, seed, openings))
     if "solver" in parts:
         out.update(solver_rung(make_player(value_fn, "mcts", sims),
                                _Data.get(results_dir, "solver"), seed))
@@ -487,10 +587,19 @@ def _champion_csv(path, rows):
     _write_csv(path, header, [[d.get(k, "") for k in header] for d in rows])
 
 
+def champions_csv_name(positions=DEFAULT_POSITIONS, openings=DEFAULT_OPENINGS):
+    return f"champions_yardstick{settings_suffix(positions, openings)}.csv"
+
+
 def score_champions(name, results_dir=DEFAULT_RESULTS, runs_dir=None, sims=200, seed=0,
-                    final_solver=False, allow_partial=False, config_path=None, log=print):
+                    final_solver=False, allow_partial=False, config_path=None,
+                    positions=DEFAULT_POSITIONS, openings=DEFAULT_OPENINGS, log=print):
     """Score every champion of run ``name`` (see the module docstring). ``config_path``
-    overrides ``<results-dir>/<name>/config.ini``, which is otherwise required."""
+    overrides ``<results-dir>/<name>/config.ini``, which is otherwise required. The csv is
+    ``champions_csv_name(positions, openings)`` (v1: ``champions_yardstick.csv``; else e.g.
+    ``champions_yardstick_10k_3ply.csv``) and carries the ``positions_set`` and
+    ``openings_set`` columns."""
+    check_settings(positions, openings)
     import torch
 
     torch.set_num_threads(1)
@@ -503,13 +612,13 @@ def score_champions(name, results_dir=DEFAULT_RESULTS, runs_dir=None, sims=200, 
     config = netfn.load_config(Path(config_path))
     # every data file up front: a missing or unchecked file fails before any scoring
     _Data.get(results_dir, "uci", allow_partial)
-    _Data.get(results_dir, "moves")
+    _Data.get(results_dir, "moves", positions=positions)
     if final_solver:
         _Data.get(results_dir, "solver")
     with gzip.open(runs_dir / name / "champions.pkl.gz", "rb") as f:
         champions = pickle.load(f)
     rounds = sorted(champions)
-    path = Path(results_dir) / name / "champions_yardstick.csv"
+    path = Path(results_dir) / name / champions_csv_name(positions, openings)
     rows = []
     for r in rounds:
         t0 = time.time()
@@ -517,7 +626,8 @@ def score_champions(name, results_dir=DEFAULT_RESULTS, runs_dir=None, sims=200, 
                                               else ())
         entry = champions[r]   # run.py: {"genome": DefaultGenome, "generation": int, "key": int}
         d = score_genome(entry["genome"], config, sims=sims, parts=parts, seed=seed,
-                         results_dir=results_dir, allow_partial=allow_partial)
+                         results_dir=results_dir, allow_partial=allow_partial,
+                         positions=positions, openings=openings)
         d["round"] = int(r)
         d["generation"] = int(entry["generation"])
         d["key"] = int(entry["key"])
@@ -543,6 +653,9 @@ def main(argv=None):
     a.add_argument("--n", type=int, default=2000)
     a.add_argument("--seed", type=int, default=0)
     a.add_argument("--workers", type=int, default=12)
+    a.add_argument("--tag", default=None,
+                   help="write positions_<tag>.csv (+ its own solve cache); default: the v1 "
+                        "names positions.csv / positions_solve_cache.csv")
     a = sub.add_parser("build-solver-openings")
     a.add_argument("--n", type=int, default=50)
     a.add_argument("--seed", type=int, default=0)
@@ -556,18 +669,23 @@ def main(argv=None):
     a.add_argument("--allow-partial", action="store_true")
     a.add_argument("--config", default=None,
                    help="NEAT config (default: <results-dir>/<name>/config.ini, required)")
+    a.add_argument("--positions", choices=sorted(POSITION_SETS), default=DEFAULT_POSITIONS,
+                   help="move-accuracy positions: v1 (2,000) or 10k (10,000)")
+    a.add_argument("--openings", choices=sorted(O.OPENING_SETS), default=DEFAULT_OPENINGS,
+                   help="ladder openings: 2ply (21 x 2 colours) or 3ply (147 x 2 colours)")
     args = ap.parse_args(argv)
     rd = args.results_dir
     if args.cmd == "build-uci":
         build_uci(rd, limit=args.limit, workers=args.workers)
     elif args.cmd == "build-positions":
-        build_positions(rd, n=args.n, seed=args.seed, workers=args.workers)
+        build_positions(rd, n=args.n, seed=args.seed, workers=args.workers, tag=args.tag)
     elif args.cmd == "build-solver-openings":
         build_solver_openings(rd, n=args.n, seed=args.seed, workers=args.workers)
     elif args.cmd == "champions":
         score_champions(args.name, rd, args.runs_dir, sims=args.sims, seed=args.seed,
                         final_solver=args.final_solver, allow_partial=args.allow_partial,
-                        config_path=args.config)
+                        config_path=args.config, positions=args.positions,
+                        openings=args.openings)
 
 
 if __name__ == "__main__":

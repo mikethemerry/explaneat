@@ -104,7 +104,9 @@ def test_build_positions_deterministic(tmp_path, built):
 def test_oracle_move_accuracy(built):
     states, _, sc = Y.load_positions(built)
     m = Y.move_metrics(OraclePlayer(states, sc), states, sc, "oracle")
-    assert m == {"move_acc_oracle": 1.0, "blunder_oracle": 0.0, "move_opt_oracle": 1.0}
+    assert m == {"move_acc_oracle": 1.0, "blunder_oracle": 0.0, "move_opt_oracle": 1.0,
+                 "move_acc_oracle_se": 0.0, "blunder_oracle_se": 0.0,
+                 "move_opt_oracle_se": 0.0}
     r = Y.move_metrics(O.RandomPlayer(), states, sc, "random")
     assert r["move_acc_random"] < 1.0
     assert r["blunder_random"] > 0.0
@@ -123,7 +125,8 @@ def test_move_metrics_sign_rule():
             return np.full(len(states), self.c)
 
     assert Y.move_metrics(Fixed(1), [st], sc, "x") == {
-        "move_acc_x": 1.0, "blunder_x": 0.0, "move_opt_x": 0.0}
+        "move_acc_x": 1.0, "blunder_x": 0.0, "move_opt_x": 0.0,
+        "move_acc_x_se": 0.0, "blunder_x_se": 0.0, "move_opt_x_se": 0.0}
     assert Y.move_metrics(Fixed(3), [st], sc, "x")["blunder_x"] == 1.0
     lost = np.array([[-1000, -1, -3, -5, -2, -2, -2]])
     assert Y.move_metrics(Fixed(3), [st], lost, "x")["move_acc_x"] == 1.0
@@ -375,3 +378,166 @@ def test_solver_rung_runs(built):
         assert d[f"solver_preserve_{c}_n"] == 4
         assert 0.0 <= d[f"solver_preserve_{c}"] <= 1.0
     assert d["solver_first_score"] <= d["solver_first_theory"] + 1e-12  # perfect opponent
+
+
+# --- yardstick v2 options -------------------------------------------------------------
+
+GOLDEN_FIXTURE = Y.HERE / "results" / "yardstick" / "positions.csv"
+
+# Scores of the v1 code (before the v2 options) on the first 40 committed positions,
+# sims 12, ladder vs random and ab2, seed 3: the defaults must reproduce them exactly.
+GOLDEN_V1 = {
+    "const": {
+        "blunder_mcts": 0.325, "blunder_net": 0.375, "ladder_ab2_mcts": 0.27380952380952384,
+        "ladder_ab2_mcts_d": 1, "ladder_ab2_mcts_l": 30, "ladder_ab2_mcts_w": 11,
+        "ladder_ab2_net": 0.023809523809523808, "ladder_ab2_net_d": 0, "ladder_ab2_net_l": 41,
+        "ladder_ab2_net_w": 1, "ladder_random_mcts": 0.9285714285714286,
+        "ladder_random_mcts_d": 0, "ladder_random_mcts_l": 3, "ladder_random_mcts_w": 39,
+        "ladder_random_net": 0.7619047619047619, "ladder_random_net_d": 0,
+        "ladder_random_net_l": 10, "ladder_random_net_w": 32, "move_acc_mcts": 0.675,
+        "move_acc_net": 0.625, "move_opt_mcts": 0.4, "move_opt_net": 0.3},
+    "genome": {
+        "blunder_mcts": 0.175, "blunder_net": 0.15, "ladder_ab2_mcts": 0.42857142857142855,
+        "ladder_ab2_mcts_d": 2, "ladder_ab2_mcts_l": 23, "ladder_ab2_mcts_w": 17,
+        "ladder_ab2_net": 0.2619047619047619, "ladder_ab2_net_d": 0, "ladder_ab2_net_l": 31,
+        "ladder_ab2_net_w": 11, "ladder_random_mcts": 0.9047619047619048,
+        "ladder_random_mcts_d": 0, "ladder_random_mcts_l": 4, "ladder_random_mcts_w": 38,
+        "ladder_random_net": 0.7857142857142857, "ladder_random_net_d": 0,
+        "ladder_random_net_l": 9, "ladder_random_net_w": 33, "move_acc_mcts": 0.825,
+        "move_acc_net": 0.85, "move_opt_mcts": 0.5, "move_opt_net": 0.5},
+}
+
+
+@pytest.fixture(scope="module")
+def golden_rd(tmp_path_factory):
+    rd = tmp_path_factory.mktemp("golden")
+    (rd / "yardstick").mkdir()
+    lines = GOLDEN_FIXTURE.read_text().splitlines(keepends=True)[:41]
+    (rd / "yardstick" / "positions.csv").write_text("".join(lines))
+    return rd
+
+
+def _golden_value_fns():
+    import random
+
+    cfg = netfn.load_config()
+    random.seed(0)
+    g = cfg.genome_type(1)
+    g.configure_new(cfg.genome_config)
+    return {"const": ConstValue(0.5), "genome": netfn.ValueFn(g, cfg)}
+
+
+@pytest.mark.parametrize("which", ["const", "genome"])
+def test_defaults_reproduce_v1_scores(golden_rd, which):
+    vf = _golden_value_fns()[which]
+    d = Y.score_value_fn(vf, sims=12, parts=("moves", "ladder"), results_dir=golden_rd,
+                         ladder_opps=("random", "ab2"), seed=3)
+    assert {k: d[k] for k in GOLDEN_V1[which]} == GOLDEN_V1[which]
+    assert d["positions_set"] == "v1" and d["openings_set"] == "2ply"
+    assert d["move_n"] == 40 and d["ladder_n_games"] == 42
+    explicit = Y.score_value_fn(vf, sims=12, parts=("moves", "ladder"), results_dir=golden_rd,
+                                ladder_opps=("random", "ab2"), seed=3, positions="v1",
+                                openings="2ply")
+    assert explicit == d
+
+
+def test_openings_3ply():
+    op = O.OPENINGS_3PLY
+    assert len(op) == 147 and len({tuple(o) for o in op}) == 147
+    assert all(len(o) == 3 and o[0] in (2, 3, 4) and all(0 <= c < 7 for c in o) for o in op)
+    for o in op:
+        s = O.GameState.from_moves(o)
+        assert not s.last_mover_won() and not s.is_full()
+    assert O.OPENING_SETS == {"2ply": O.OPENINGS_2PLY, "3ply": O.OPENINGS_3PLY}
+    assert len(O.OPENINGS_2PLY) == 21
+
+
+def test_ladder_3ply_games_and_se():
+    pl = Y.make_player(ConstValue(0.5), "net", 2)
+    m = Y.ladder_metrics(pl, "random", "net", seed=0, openings="3ply")
+    k = "ladder_random_net"
+    w, d, l = m[f"{k}_w"], m[f"{k}_d"], m[f"{k}_l"]
+    assert w + d + l == 294
+    res = np.array([1.0] * w + [0.5] * d + [0.0] * l)
+    assert m[k] == pytest.approx(res.mean())
+    assert m[f"{k}_se"] == pytest.approx(res.std(ddof=1) / np.sqrt(294))
+    with pytest.raises(ValueError, match="openings"):
+        Y.ladder_metrics(pl, "random", "net", seed=0, openings="4ply")
+
+
+def test_positions_file_names():
+    assert Y.positions_files() == ("positions.csv", "positions_solve_cache.csv")
+    assert Y.positions_files("10k") == ("positions_10k.csv", "positions_10k_solve_cache.csv")
+    with pytest.raises(ValueError):
+        Y.positions_files("a/b")
+    assert Y.settings_suffix() == "" and Y.settings_suffix("v1", "2ply") == ""
+    assert Y.settings_suffix("10k", "3ply") == "_10k_3ply"
+    assert Y.settings_suffix("v1", "3ply") == "_v1_3ply"
+    assert Y.champions_csv_name() == "champions_yardstick.csv"
+    assert Y.champions_csv_name("10k", "2ply") == "champions_yardstick_10k_2ply.csv"
+    with pytest.raises(ValueError, match="positions set"):
+        Y.settings_suffix("20k", "2ply")
+
+
+@needs_solver
+def test_build_positions_tag(tmp_path):
+    Y.build_positions(tmp_path, n=12, seed=1, tag="10k", log=lambda *a: None)
+    yd = tmp_path / "yardstick"
+    assert sorted(p.name for p in yd.iterdir()) == ["positions_10k.csv",
+                                                     "positions_10k_solve_cache.csv"]
+    assert _positions_ok(yd / "positions_10k.csv") == 12
+    states, ply, sc = Y.load_positions(tmp_path, positions="10k")
+    assert len(states) == 12 and sc.shape == (12, 7)
+    with pytest.raises(FileNotFoundError):
+        Y.load_positions(tmp_path)              # v1 file not written by a tagged build
+    seqs = [r.split(",")[0] for r in (yd / "positions_10k.csv").read_text().splitlines()[1:]]
+    assert seqs == [s for s, _ in Y.generate_positions(12, seed=1)]
+
+
+def test_se_fields(golden_rd):
+    d = Y.score_value_fn(ConstValue(0.5), sims=4, parts=("moves",), results_dir=golden_rd)
+    for m in ("move_acc", "blunder", "move_opt"):
+        for mode in ("net", "mcts"):
+            p = d[f"{m}_{mode}"]
+            assert d[f"{m}_{mode}_se"] == pytest.approx(np.sqrt(p * (1 - p) / 40))
+    assert "ladder_n_games" not in d and d["move_n"] == 40
+    sc = np.array([5, 0, -3, 2, 1, -1])
+    vals = np.array([0.9, 0.5, 0.1, 0.2, 0.7, 0.4])
+    u = Y.uci_metrics(lambda Xb: vals, np.zeros((6, 42)), sc)
+    for k in ("uci_auc_se", "uci_wdl_acc_se", "uci_brier_se"):
+        assert np.isfinite(u[k]) and u[k] > 0
+    assert u["uci_wdl_acc_se"] == pytest.approx(np.sqrt(u["uci_wdl_acc"]
+                                                        * (1 - u["uci_wdl_acc"]) / 6))
+    assert Y._auc_se(1.0, 3, 3) == 0.0 and np.isnan(Y._auc_se(float("nan"), 3, 3))
+
+
+def test_unknown_settings_refused(golden_rd):
+    with pytest.raises(ValueError, match="positions set"):
+        Y.score_value_fn(ConstValue(0.5), parts=("moves",), results_dir=golden_rd,
+                         positions="2k")
+    with pytest.raises(ValueError, match="openings set"):
+        Y.score_value_fn(ConstValue(0.5), parts=("moves",), results_dir=golden_rd,
+                         openings="1ply")
+
+
+def test_champions_v2_file_and_columns(golden_rd, tmp_path, monkeypatch):
+    runs = _champ_runs(tmp_path, 2)
+    rd = tmp_path / "rd"
+    (rd / "yardstick").mkdir(parents=True)
+    (rd / "yardstick" / "positions_10k.csv").write_bytes(
+        (golden_rd / "yardstick" / "positions.csv").read_bytes())
+    seen = []
+
+    def fake(genome, config, parts=(), positions="v1", openings="2ply", **kw):
+        seen.append((positions, openings))
+        return {"positions_set": positions, "openings_set": openings, "a": 1.0}
+
+    monkeypatch.setattr(Y, "_Data", type("D", (), {"get": staticmethod(lambda *a, **k: None)}))
+    monkeypatch.setattr(Y, "score_genome", fake)
+    path = Y.score_champions("t", rd, runs, positions="10k", openings="3ply",
+                             config_path=netfn.DEFAULT_CONFIG, log=lambda *a: None)
+    assert path.name == "champions_yardstick_10k_3ply.csv"
+    assert seen == [("10k", "3ply")] * 2
+    rows = list(csv.DictReader(path.read_text().splitlines()))
+    assert {(r["positions_set"], r["openings_set"]) for r in rows} == {("10k", "3ply")}
+    assert not (rd / "t" / "champions_yardstick.csv").exists()
