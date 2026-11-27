@@ -116,3 +116,61 @@ The evolved weights are the reference.
 - **CSVs:** `rescue_plus.csv`, `rescue2_selection.csv`, `rescue2.csv`, `reinit_feature.csv`,
   `reinit_network.csv`.
 - **Write-up:** in `EXTENSIONS_RESULTS.md` (Claude).
+
+## Amendment E-K (2026-11-28): fan-in-scaled (Kaiming) init arm for E1 and E2
+
+Requested by Mike. Written and committed before any run of this arm. It answers the question
+left open in `EXTENSIONS_RESULTS.md` §E: is the gap between re-inits and the evolved weights
+caused by the N(0,1) init scale (about a quarter of units dead) or by the topology? The N(0,1)
+arm, its CSVs and weights files stay as recorded and are not rerun or changed.
+
+**Init (the only change).**
+- **Weights:** every redrawn connection weight into node j is drawn from N(0, g/fan_in(j)).
+  - `fan_in(j)` is the number of *enabled* connection genes into j in the genome being
+    initialised. This is the sparse genome fan-in, not the dense layer width.
+    - E2: the evolved genome.
+    - E1: the knocked-out recipient after the graft, so the output's fan-in counts the
+      recipient's remaining enabled readouts plus the grafted ones.
+  - g = 2 into a hidden node (ReLU, the config's only hidden activation) and g = 1 into an
+    output node (sigmoid).
+- **Biases:** every redrawn bias (hidden and output) is set to 0.
+- **Draws:** the same seeds (1000–1009) and the same draw order as the N(0,1) arm:
+  - E2: `default_rng(seed)`, node biases in ascending node id, then enabled connection weights
+    in ascending key (`reinit_all`);
+  - E1: the graft's sham draw, grafted biases then grafted weights in ascending new key
+    (`graft_into_knockout(sham_seed=seed)`).
+- The bias draws are consumed and discarded. Each weight is the N(0,1) arm's standard normal
+  draw times sqrt(g/fan_in(j)). So the two arms are paired: same signs and same relative sizes
+  into each node, only the per-node scale (and the zero bias) differs.
+- Only the parameters the N(0,1) arm redraws are redrawn: in E2 all of them; in E1 the grafted
+  subgraph's (the recipient's own weights are kept). Disabled genes are untouched.
+
+**Everything else unchanged:**
+- **E2:** the 10 churn100 topologies × 10 inits. Masked training, Adadelta lr 1.5, torch seed =
+  init seed. Checkpoints at E = 500 (primary) and E = 2000, plus the early-stopping rule of
+  `EARLY_STOPPING_PLAN.md` (fit/val rows of `val_split.json`, with the `evolved_esft`
+  reference).
+- **E1:** the D2 cases plus B1, B2, C1, C2. Knockout, graft, study C's readout refit, then a
+  masked fine-tune at E = 500 (ft seed = recipient seed), plus the early-stopping variant (refit
+  on the fit rows). Reference: the donor's own weights, as before.
+- **Metrics:** the same metrics, including the dead-unit count.
+- **Equivalence rule:** the same, logit r ≥ 0.99 and median matched cosine ≥ 0.9 (E1:
+  contribution r vs the donor feature).
+
+**Output.**
+- **CSVs:** `reinit_network_kaiming.csv`, `reinit_network_kaiming_es.csv`,
+  `reinit_feature_kaiming.csv`, `reinit_feature_kaiming_es.csv`.
+- **Weights:** `reinit_weights/*_kaiming*.json`.
+- **Comparison:** `reinit_init_compare.py` reads the eight E CSVs (both arms) and writes
+  `reinit_init_comparison.csv`, plus a generated table block in a new `EXTENSIONS_RESULTS.md`
+  section that puts N(0,1) and Kaiming side by side for each regime (E2: E = 500, 2000, ES; E1:
+  E = 500, ES):
+  - equivalent count;
+  - median Δ test AUC vs the evolved weights (E2) or the alias-weights reference (E1);
+  - share of inits reaching that reference's test AUC;
+  - dead-unit share.
+- **Paired test:** a per-init paired Kaiming − N(0,1) test AUC difference (median and sign
+  test). It is valid because the draws are paired.
+
+**Determinism.** Each analysis is run twice. The CSVs and weights files of the two runs must
+be byte-identical before they are committed.
