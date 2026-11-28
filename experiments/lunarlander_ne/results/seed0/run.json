@@ -1,0 +1,11 @@
+{
+ "seed": 0,
+ "generations": 400,
+ "episodes": 8,
+ "workers": 4,
+ "config": "/Users/mike/dev/explaneat/.claude/worktrees/lunarlander-ne/experiments/lunarlander_ne/configs/lander.ini",
+ "out": null,
+ "stop_at": null,
+ "train_seeds": "1000000 + gen*8 + i",
+ "config_text": "# LunarLander-v3 pure neuroevolution (no backprop): weights and biases evolve by mutation.\n# 8 state inputs, 4 outputs (argmax = action). Hidden activation relu (as PropNEAT);\n# outputs are read as linear scores by policy.py (argmax is the same under NeuralNeat's sigmoid).\n[NEAT]\npop_size = 150\nfitness_criterion = max\nfitness_threshold = 100000.0\nreset_on_extinction = False\n\n[DefaultGenome]\nactivation_default = relu\nactivation_mutate_rate = 0.0\nactivation_options = relu\naggregation_default = sum\naggregation_mutate_rate = 0.0\naggregation_options = sum\nbias_init_mean = 0.0\nbias_init_stdev = 1.0\nbias_max_value = 30.0\nbias_min_value = -30.0\nbias_mutate_power = 0.5\nbias_mutate_rate = 0.7\nbias_replace_rate = 0.1\ncompatibility_disjoint_coefficient = 1.0\ncompatibility_weight_coefficient = 0.5\nconn_add_prob = 0.3\nconn_delete_prob = 0.2\nenabled_default = True\nenabled_mutate_rate = 0.01\nfeed_forward = True\ninitial_connection = full_direct\nnode_add_prob = 0.1\nnode_delete_prob = 0.05\nnum_hidden = 0\nnum_inputs = 8\nnum_outputs = 4\nresponse_init_mean = 1.0\nresponse_init_stdev = 0.0\nresponse_max_value = 30.0\nresponse_min_value = -30.0\nresponse_mutate_power = 0.0\nresponse_mutate_rate = 0.0\nresponse_replace_rate = 0.0\nweight_init_mean = 0.0\nweight_init_stdev = 1.0\nweight_max_value = 30.0\nweight_min_value = -30.0\nweight_mutate_power = 0.5\nweight_mutate_rate = 0.8\nweight_replace_rate = 0.1\n\n[DefaultSpeciesSet]\ncompatibility_threshold = 3.0\n\n[DefaultStagnation]\nspecies_fitness_func = max\nmax_stagnation = 20\nspecies_elitism = 2\n\n[DefaultReproduction]\nelitism = 2\nsurvival_threshold = 0.2\n"
+}
