@@ -17,6 +17,12 @@ Per arm and regime:
 - pooled dead-unit share (dead units / hidden or grafted units over all inits);
 - the median test AUC and median logit (E2) or contribution (E1) r, for context.
 
+Post hoc (added after the E-K runs, not in the amendment; labelled as such): a
+``dead_vs_gap`` row per E2 arm and regime, giving the within-topology Spearman rho
+between an init's dead-unit share and its test AUC delta vs the evolved weights
+(both centred on the topology mean), and the inits with no dead unit and their
+median delta.
+
 The paired row gives the median per-init difference, the counts of inits where
 Kaiming is higher or lower, and a two-sided sign test (ties dropped). It also
 checks that the references (the evolved rows, the alias-weights reference rows
@@ -32,7 +38,7 @@ import csv
 from pathlib import Path
 
 import numpy as np
-from scipy.stats import binomtest
+from scipy.stats import binomtest, spearmanr
 
 HERE = Path(__file__).resolve().parent
 OUT = HERE / "reinit_init_comparison.csv"
@@ -54,7 +60,8 @@ COLUMNS = [
     "median_test_auc", "median_delta_vs_ref", "n_reach_ref", "share_reach_ref",
     "n_dead", "n_units", "dead_share", "median_r_vs_ref_function",
     "median_paired_diff", "n_kaiming_higher", "n_kaiming_lower", "n_ties", "sign_test_p",
-    "references_identical", "note",
+    "references_identical", "dead_gap_spearman_rho", "dead_gap_spearman_p",
+    "n_inits_no_dead", "median_delta_no_dead", "note",
 ]
 
 
@@ -102,6 +109,25 @@ def summarise(level, inits):
             "median_r_vs_ref_function": float(np.median(rv[np.isfinite(rv)]))}
 
 
+def dead_vs_gap(inits):
+    """Within-topology Spearman rho (dead share vs delta, each centred on the
+    topology mean) and the no-dead-unit inits (E2)."""
+    rs = [inits[k] for k in sorted(inits)]
+    d = np.array([float(r["test_auc_minus_evolved"]) for r in rs])
+    nd = np.array([int(r["n_dead"]) for r in rs])
+    sh = nd / np.array([int(r["n_hidden"]) for r in rs])
+    ts = np.array([r["topology_seed"] for r in rs])
+    dc, sc = d.copy(), sh.copy()
+    for t in sorted(set(ts)):
+        m = ts == t
+        dc[m] -= d[m].mean()
+        sc[m] -= sh[m].mean()
+    rho, p = spearmanr(sc, dc)
+    return {"dead_gap_spearman_rho": float(rho), "dead_gap_spearman_p": float(p),
+            "n_inits_no_dead": int((nd == 0).sum()),
+            "median_delta_no_dead": float(np.median(d[nd == 0])) if (nd == 0).any() else ""}
+
+
 def build():
     out = []
     for level, regime, stem, epochs in REGIMES:
@@ -126,6 +152,13 @@ def build():
                     "references_identical": ref_sets["normal"] == ref_sets["kaiming"],
                     "note": "per-init test AUC difference paired on (topology or case, init "
                             "seed); two-sided sign test, ties dropped"})
+        if level == "E2":
+            for arm, label in ARMS.items():
+                out.append({"kind": "dead_vs_gap", "level": level, "regime": regime,
+                            "arm": label, "n_inits": len(per_arm[arm]),
+                            **dead_vs_gap(per_arm[arm]),
+                            "note": "post hoc (not in amendment E-K): within-topology Spearman "
+                                    "of dead-unit share vs test AUC delta vs evolved"})
     return out
 
 
@@ -162,6 +195,19 @@ def table(rows):
         lines.append(f"| {level} | {regime} | {p['median_paired_diff']:+.3f} "
                      f"| {p['n_kaiming_higher']} / {p['n_kaiming_lower']} / {p['n_ties']} "
                      f"| {p['sign_test_p']:.2g} | {'yes' if p['references_identical'] else 'NO'} |")
+    lines += ["", "Post hoc (not in the amendment): dead units against the gap, E2. Spearman ρ "
+              "between an init's dead-unit share and its Δ test AUC vs the evolved weights, both "
+              "centred within topology; and the inits with no dead unit:", "",
+              "| Regime | Init | ρ (p) | Inits with no dead unit | Their median Δ |",
+              "|---|---|---|---|---|"]
+    for r in rows:
+        if r["kind"] == "dead_vs_gap":
+            md = r["median_delta_no_dead"]
+            lines.append(f"| {r['regime']} | {r['arm']} | {r['dead_gap_spearman_rho']:+.2f} "
+                         f"({r['dead_gap_spearman_p']:.2g}) | {r['n_inits_no_dead']}/{r['n_inits']} "
+                         f"| {md:+.3f} |" if md != "" else
+                         f"| {r['regime']} | {r['arm']} | {r['dead_gap_spearman_rho']:+.2f} "
+                         f"({r['dead_gap_spearman_p']:.2g}) | 0/{r['n_inits']} | — |")
     lines += ["", END]
     return "\n".join(lines)
 

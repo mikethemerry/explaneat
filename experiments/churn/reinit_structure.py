@@ -66,7 +66,8 @@ COLUMNS = [
     "n_role_recovered", "share_role_recovered", "median_share_recovered",
     "median_share_role_recovered", "median_share_lost", "n_preserved",
     "median_feature_r", "n_compositions", "n_composition_recovered",
-    "share_composition_recovered", "n_topologies", "note",
+    "share_composition_recovered", "n_root_inits", "n_root_recovered",
+    "n_inner_composition_inits", "n_inner_composition_recovered", "n_topologies", "note",
 ]
 
 
@@ -158,6 +159,7 @@ def run(dry_run=False, init="kaiming"):
                                 readout_edges(state, exits, outputs), leaf)
                     rows.append(dict(base, kind="leaf" if leaf else "composition",
                                      regime=regime, init_seed=int(s),
+                                     is_root=exits <= outputs,
                                      replay_max_abs_err=err, **r))
             lr = [r for r in rows if r["kind"] == "leaf" and r["topology_seed"] == ts
                   and r["regime"] == regime]
@@ -251,6 +253,15 @@ def summaries(rows):
     return out
 
 
+def _comp_split(comp):
+    """Roots (exits = the output: the whole function) vs inner compositions."""
+    root = [r for r in comp if r["is_root"]]
+    inner = [r for r in comp if not r["is_root"]]
+    return {"n_root_inits": len(root), "n_root_recovered": sum(r["recovered"] for r in root),
+            "n_inner_composition_inits": len(inner),
+            "n_inner_composition_recovered": sum(r["recovered"] for r in inner)}
+
+
 def pooled(rows):
     out = []
     for (init, regime), rs in _groups(rows, "leaf", ("init", "regime")).items():
@@ -271,6 +282,7 @@ def pooled(rows):
                     "n_composition_recovered": sum(r["recovered"] for r in comp),
                     "share_composition_recovered": (np.mean([r["recovered"] for r in comp])
                                                     if comp else ""),
+                    **_comp_split(comp),
                     "note": "counts over leaf x init pairs; n_preserved = inits (topology x seed) "
                             "with every leaf recovered; n_alive_different = neither recovered "
                             "nor lost"})
