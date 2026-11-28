@@ -441,7 +441,8 @@ COND_COLS = ["build", "arm", "condition", "recipient_seed", "n_parts", "parts", 
              "d_vs_base", "d_vs_base_lo", "d_vs_base_hi",
              "grafted_contrib_sd_train", "other_contrib_sd_train", "preservation_err"]
 READ_COLS = ["build", "condition", "k", "feature", "family", "readout_weights",
-             "donor_contrib_sd_train", "contrib_sd_train", "ratio_to_donor"]
+             "donor_contrib_sd_train", "contrib_sd_train", "ratio_to_donor",
+             "corr_with_donor_signal"]
 DEDUP_COLS = ["step", "added", "feature", "family", "val_auc", "gain", "accepted", "C",
               "val_bce"]
 COMP_COLS = ["model", "kind", "best_by_train", "train_auc", "test_auc", "test_auc_ci_lo",
@@ -504,7 +505,7 @@ def run_build(b, feats, cache, data, val, boot, p_ref, dry, pool_info):
     if dry:
         return None
     # test evaluation
-    rows, p, read = [], {}, []
+    rows, p, read, fams = [], {}, [], []
     for cond, arm, _, _ in CONDS:
         gg, conf, recs = made[cond]
         m, p[cond] = ec.evaluate(gg, conf, data, boot)
@@ -519,13 +520,17 @@ def run_build(b, feats, cache, data, val, boot, p_ref, dry, pool_info):
             ks = [tuple(k) for k in rec["readout_connections"]]
             sd0 = float(pool_info[f["k"]]["donor_signal_sd_train"])
             sd = float(np.std(contrib[f["k"]]))
+            s0 = donor_signal(f, cache, Xtr)
+            corr = (float(np.corrcoef(contrib[f["k"]], s0)[0, 1])
+                    if sd > 1e-12 and float(np.std(s0)) > 1e-12 else "")
             read.append({"build": build_name(b), "condition": cond, "k": f["k"],
                          "feature": pool_info[f["k"]]["feature"],
                          "family": pool_info[f["k"]]["family"],
                          "readout_weights": ";".join(f"{gg.connections[k].weight:.6g}"
                                                      for k in ks),
                          "donor_contrib_sd_train": sd0, "contrib_sd_train": sd,
-                         "ratio_to_donor": sd / sd0})
+                         "ratio_to_donor": sd / sd0, "corr_with_donor_signal": corr})
+        fams += family_rows(build_name(b), cond, recs, contrib, pool_info)
     for r in rows:
         cond = r["condition"]
         pairs = [("best_seed", p_ref["best"]), ("ensemble", p_ref["ensemble10"])]
@@ -536,7 +541,34 @@ def run_build(b, feats, cache, data, val, boot, p_ref, dry, pool_info):
         for name, pr in pairs:
             d, lo, hi = ec.paired_delta(data, p[cond], pr, boot)
             r.update({f"d_vs_{name}": d, f"d_vs_{name}_lo": lo, f"d_vs_{name}_hi": hi})
-    return rows, read
+    return rows, read, fams
+
+
+def family_rows(build_id, cond, recs, contrib, pool_info):
+    """Per signal family: n parts, gross = sum of the parts' contribution sds, net = sd of
+    their summed contribution, net / gross (1: the aliases add up; near 0: they cancel),
+    effective number of realisations gross^2 / sum sd^2, and the largest part."""
+    by = {}
+    for f, _ in recs:
+        by.setdefault(pool_info[f["k"]]["family"], []).append(f["k"])
+    out = []
+    for fam in sorted(by):
+        ks = by[fam]
+        sds = {k: float(np.std(contrib[k])) for k in ks}
+        gross = sum(sds.values())
+        net = float(np.std(sum(contrib[k] for k in ks)))
+        top = max(ks, key=lambda k: (sds[k], -k))
+        out.append({"build": build_id, "condition": cond, "family": fam, "n_parts": len(ks),
+                    "gross_sd": gross, "net_sd": net,
+                    "net_over_gross": net / gross if gross > 0 else "",
+                    "eff_n": gross ** 2 / sum(v * v for v in sds.values()) if gross > 0 else "",
+                    "top_feature": pool_info[top]["feature"],
+                    "top_share_of_gross": sds[top] / gross if gross > 0 else ""})
+    return out
+
+
+FAM_COLS = ["build", "condition", "family", "n_parts", "gross_sd", "net_sd", "net_over_gross",
+            "eff_n", "top_feature", "top_share_of_gross"]
 
 
 def write(path, rows, cols):
@@ -555,14 +587,15 @@ def main():
                     help="union: recipient seeds (default all ten)")
     ap.add_argument("--out-dir", default=str(RESULTS))
     args = ap.parse_args()
-    if "DATABASE_URL" not in os.environ:
-        raise SystemExit("set DATABASE_URL=postgresql://localhost/explaneat_dev (read only)")
-    torch.set_num_threads(1)
     out = Path(args.out_dir)
     if args.stage == "summary":
+        sys.path.insert(0, str(HERE))
         import summary
         summary.main(out)
         return
+    if "DATABASE_URL" not in os.environ:
+        raise SystemExit("set DATABASE_URL=postgresql://localhost/explaneat_dev (read only)")
+    torch.set_num_threads(1)
 
     from explaneat.db.base import db
     db.init_db()
@@ -594,12 +627,13 @@ def main():
     boot = ec.bootstrap_indices(len(data["y_test"]))
     conf = cache[0][1]
     comp, p_ref, best = comparators(cache, runs, data, boot, conf)
-    rows, read = [], []
+    rows, read, fams = [], [], []
     for b in builds:
         t1 = time.time()
-        r, rd = run_build(b, feats, cache, data, val, boot, p_ref, False, pool_info)
+        r, rd, fm = run_build(b, feats, cache, data, val, boot, p_ref, False, pool_info)
         rows += r
         read += rd
+        fams += fm
         print(f"{build_name(b)} done ({time.time() - t1:.0f}s)", flush=True)
         for x in r:
             print(f"   {x['condition']:20s} test {x['test_auc']:.4f} d_best "
@@ -629,6 +663,7 @@ def main():
             d, lo, hi = ec.paired_delta(data, pd_, pr, boot)
             row.update({f"d_vs_{name}": d, f"d_vs_{name}_lo": lo, f"d_vs_{name}_hi": hi})
         contrib, other = part_contributions(gd, conf_, data["X_train"], recs)
+        fams += family_rows("standalone-dedup", "dedup-refit", recs, contrib, pool_info)
         row["grafted_contrib_sd_train"] = float(np.std(sum(contrib.values())))
         row["other_contrib_sd_train"] = float(np.std(other))
         rows.append(row)
@@ -636,6 +671,7 @@ def main():
         write(out / "comparators.csv", comp + references(), COMP_COLS)
     write(out / f"conditions_{tag}.csv", rows, COND_COLS)
     write(out / f"readout_{tag}.csv", read, READ_COLS)
+    write(out / f"families_{tag}.csv", fams, FAM_COLS)
 
 
 if __name__ == "__main__":
